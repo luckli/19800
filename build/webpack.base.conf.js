@@ -52,10 +52,7 @@ module.exports = {
         test: /\.json$/,
         loader: 'json'
       },
-      {
-        test: /\.less$/,
-        loader: "style!css!less"
-      },
+      { test: /\.less$/, loader: 'less-loader' },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
         loader: 'url',

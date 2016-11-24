@@ -9,7 +9,7 @@
   import '../static/lib/font-awesome/css/font-awesome.min'
   import '../static/lib/style.min'
   import '../static/lib/animate.min'
-  //import 'less!./assets/css/reset'
+  import './assets/css/reset'
   
   //import Login from './components/login'
   /*import Hello from './components/Hello'*/
