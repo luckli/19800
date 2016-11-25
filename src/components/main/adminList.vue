@@ -8,12 +8,12 @@
                <div class="panel-body">
                   <div class="col-xs-8 col-md-8 manage-btns">
                      <button class="btn btn-inverse" id="manage-add" data-target="#mng-add" data-toggle="modal">添加管理员</button>
-                     <button class="btn btn-inverse" id="manage-lock" data-target="#mng-lock" data-toggle="modal">锁定</button>
-                     <button class="btn btn-inverse" id="manage-unlock" data-target="#mng-unlock" data-toggle="modal">解除锁定</button>
-                     <button class="btn btn-inverse" id="manage-set-role" data-target="#mng-set-role" data-toggle="modal">设置角色</button>
-                     <button class="btn btn-inverse" id="manage-lock-key" data-target="#mng-lock-key" data-toggle="modal">绑定密钥</button>
-                     <button class="btn btn-inverse" id="manage-unbind-otp" data-target="#mng-unbind-otp" data-toggle="modal">解除谷歌otp绑定</button>
-                     <button class="btn btn-inverse" id="manage-reset-pwd" data-target="#mng-reset-pwd" data-toggle="modal">重置登陆密码</button>
+                     <button class="btn btn-inverse" id="manage-lock">锁定</button>
+                     <button class="btn btn-inverse" id="manage-unlock">解除锁定</button>
+                     <button class="btn btn-inverse" id="manage-set-role">设置角色</button>
+                     <button class="btn btn-inverse" id="manage-lock-key">绑定密钥</button>
+                     <button class="btn btn-inverse" id="manage-unbind-otp">解除谷歌otp绑定</button>
+                     <button class="btn btn-inverse" id="manage-reset-pwd">重置登陆密码</button>
                   </div>
                   <div class="col-xs-4 col-md-4 dataTable-filter text-right">
                      <label for="input-filter">
@@ -25,29 +25,21 @@
                      <thead>
                         <tr>
                            <th>登陆账号</th>
+                           <th>昵称</th>
                            <th>是否锁定</th>
                            <th>角色</th>
                            <th>充值码额度</th>
-                           <th>最后登陆IP</th>
                            <th>最后登陆时间</th>
                         </tr>
                      </thead>
                      <tbody>
-                        <tr>
-                           <td>admin</td>
-                           <td>No</td>
-                           <td>超级管理员,财务人员,财务主管,编辑</td>
-                           <td>28,305.7200</td>
-                           <td>116.226.69.241</td>
-                           <td>2016-09-27 13:40:11</td>
-                        </tr>
-                        <tr>
-                           <td>admin</td>
-                           <td>No</td>
-                           <td>超级管理员,财务人员,财务主管,编辑</td>
-                           <td>28,305.7200</td>
-                           <td>116.226.69.241</td>
-                           <td>2016-09-27 13:40:11</td>
+                        <tr v-for="item in mngObj.Items" :data-id="item.Id">
+                           <td>{{item.Account}}</td>
+                           <td>{{item.NickName}}</td>
+                           <td>{{item.IsLocked ? '已锁定': 'NO'}}</td>
+                           <td>{{item.RoleNames}}</td>
+                           <td>{{item.DepositAmount}}</td>
+                           <td>{{item.CreateTime}}</td>
                         </tr>
                      </tbody>
                   </table>
@@ -68,20 +60,26 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label" for="add-user">用户名<span>*</span></label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" id="add-user" placeholder="请输入用户名" />
+                           <input type="text" class="form-control" id="add-user" v-model="mngAdd.account" placeholder="请输入用户名" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label" for="add-name">昵称<span>*</span></label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" id="add-name" v-model="mngAdd.nickName" placeholder="请输入昵称" />
                         </div>
                      </div>
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label" for="add-pwd">密码<span>*</span></label>
                         <div class="col-md-6">
-                           <input type="password" class="form-control" id="add-pwd" placeholder="请输入密码" />
+                           <input type="password" class="form-control" id="add-pwd" v-model="mngAdd.password" placeholder="请输入密码" />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success">保存</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngAdd()" @keyup.enter="mngAdd()">保存</a>
                </div>
             </div>
          </div>
@@ -253,26 +251,26 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label" for="reset-user">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" id="reset-user" readonly/>
+                           <input type="text" class="form-control" id="reset-user" v-model="mngReset.user" readonly/>
                         </div>
                      </div>
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label" for="reset-pwd">新密码<span>*</span></label>
                         <div class="col-md-6">
-                           <input type="password" class="form-control" id="reset-pwd" placeholder="请输入密码" />
+                           <input type="password" class="form-control" v-model="mngReset.pwd" id="reset-pwd" placeholder="请输入密码" />
                         </div>
                      </div>
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label" for="reset-repwd">确认新密码<span>*</span></label>
                         <div class="col-md-6">
-                           <input type="password" class="form-control" id="reset-repwd" placeholder="请再次输入密码" />
+                           <input type="password" class="form-control" v-model="mngReset.repwd" id="reset-repwd" placeholder="请再次输入密码" />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success">保存</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngModify">保存</a>
                </div>
             </div>
          </div>
@@ -286,18 +284,153 @@
    export default {
       name: 'adminList',
       mounted(){
-         var _self = this;
-         $.gritter.add({
-            title: 'This is a sticky notice!',
-            text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed tempus lacus ut lectus rutrum placerat. ',
-            image: '../../../static/img/user-2.jpg',
-            sticky: true,
-            time: '',
-            class_name: 'my-sticky-class'
+         var vm = this;
+         vm.mngList();
+         vm.item = -1;
+
+         /*选定管理员*/
+         $('#manage-table').on('click',function(e){
+            e = e || window.event;
+            var $tbody = $(e.target).closest('tbody');
+            if($tbody.length != 0){
+               vm.item = $(e.target).closest('tr').attr('data-id');
+               vm.mngReset.user = vm.mngObj.Items[vm.item-1].Account;
+            }
          });
-         Custom.ajaxFn({
-            _self: _self
+
+         // 显示弹层
+         $('.manage-btns').on('click',function(e){
+            e = e || window.event;
+
+            var _id = $(e.target).attr('id');
+            if('manage-lock' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择要锁定的管理员',_id)){
+                  $('#mng-lock').modal('show');
+               }
+            }else if('manage-unlock' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择要解除锁定的管理员',_id)){
+                  $('#mng-unlock').modal('show');
+               }
+            }else if('manage-set-role' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+                  $('#mng-set-role').modal('show');
+               }
+            }else if('manage-lock-key' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择要绑定的管理员',_id)){
+                  $('#mng-lock-key').modal('show');
+               }
+            }else if('manage-unbind-otp' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){                  
+                  $('#mng-unbind-otp').modal('show');
+               }
+            }else if('manage-reset-pwd' == _id){
+               if (vm.IsSelected('未选择任何管理员','请选择管理员',_id)) {
+                  $('#mng-reset-pwd').modal('show');
+               }
+            }
          });
+      },
+      data(){
+         return {
+            mngObj: {},
+            mngAdd: {account: '',nickName: '',password: ''},
+            mngReset: {user: '',pwd: '',repwd: ''},
+            item: -1
+         }
+      },
+      methods:{
+         // 获取管理员列表
+         mngList: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/Manager/GetPageList',{
+               data: {page: 1,pageSize: 10},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.mngObj = res.Data;
+                     var list = vm.mngObj.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreateTime = Custom.dateTimeFormatter(list[i].CreateTime);
+                        list[i].LockedTime = Custom.dateTimeFormatter(list[i].LockedTime);
+                     }
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 添加管理员
+         mngAdd: function(){
+            var vm = this;
+            Custom.ajaxFn('/Manager/Add',{
+               data: {account: vm.mngAdd.account,nickName: vm.mngAdd.nickName,password: vm.mngAdd.password},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     $('#mng-add').modal('hide');
+                     vm.mngAdd = {account: '',nickName: '',password: ''};
+                     vm.mngList();
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 锁定
+         mngLock: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/Manager/UpdateLockStatus',{
+               data: {id: vm.item,isLock: true},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     $('#mng-reset-pwd').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 解除锁定
+         mngUnlock: function(){
+            var vm = this;
+         },
+         // 修改密码
+         mngModify: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/Manager/UpdatePassword',{
+               data: {id: vm.item,password: vm.mngReset.pwd},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.mngReset = {user: '',pwd: '',repwd: ''};
+                     $('#mng-reset-pwd').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 选择一个管理员
+         IsSelected: function(title,txt,id){
+            var vm = this;
+            var _class = 'my-sticky'+id;
+            if(vm.item == -1){
+               $.gritter.add({
+                  title: title,
+                  text: txt,
+                  sticky: false,
+                  time: 5000,
+                  class_name: _class
+               });
+               return false;
+            }else{
+               return true;
+            }
+         }
       },
       replace: true
    }
@@ -320,7 +453,7 @@
          >tbody{
             >tr{
                >td{
-                  &:nth-child(4){text-align: right;}
+                  &:nth-child(5){text-align: right;}
                }
             }
          }

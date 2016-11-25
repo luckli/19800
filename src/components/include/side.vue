@@ -23,7 +23,7 @@
                 </a>
                <ul class="sub-menu">
                    <li><a href="javascript:;"><router-link to="/main/adminList">管理员列表</router-link></a></li>
-                   <li><a href="javascript:;">财务列表</a></li>
+                   <li><a href="javascript:;"><router-link to="/main/financialList">财务列表</router-link></a></li>
                    <li><a href="javascript:;">用户列表</a></li>
                    <li><a href="javascript:;">用户列表(客)</a></li>
                    <li><a href="javascript:;">分红币发放记录</a></li>
