@@ -27,6 +27,7 @@
                    <li><a href="javascript:;">用户列表</a></li>
                    <li><a href="javascript:;">用户列表(客)</a></li>
                    <li><a href="javascript:;">分红币发放记录</a></li>
+                   <li><a href="javascript:;"><router-link to="/main/moduleManage">模块管理</router-link></a></li>
                </ul>
             </li>
               <!-- begin sidebar minify button -->

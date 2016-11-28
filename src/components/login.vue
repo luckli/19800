@@ -38,10 +38,10 @@
 
 </template>
 <script>
-   export default {
+    import Custom from '../assets/js/custom'
+    export default {
       name: 'login',
       mounted(){
-         console.log('login');
          Pace.stop();
       },
       methods: {
@@ -50,11 +50,21 @@
             e.preventDefault();
             e.stopPropagation();
 
-            var _self = this;
+            var vm = this;
 
-            _self.$router.push('/main');
+            Custom.ajaxFn('/Home/Login',{
+               data: {account: '',password: '',otpCode: ''},
+               callback: function(res){
+                  if(res.IsSuccess){
+                    vm.$router.push('/main');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
          }
       },
       replace:true
-   }
+    }
 </script>

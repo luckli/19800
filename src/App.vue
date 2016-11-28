@@ -17,12 +17,12 @@
   export default {
     name: 'app',
     mounted() {
-      var _self = this;
-      _self.init();
+      var vm = this;
+      vm.init();
     },
     methods: {
       init: function(){
-        var _self = this;
+        var vm = this;
       }
     }/*,
     components: {

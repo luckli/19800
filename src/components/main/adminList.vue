@@ -10,10 +10,11 @@
                      <button class="btn btn-inverse" id="manage-add" data-target="#mng-add" data-toggle="modal">添加管理员</button>
                      <button class="btn btn-inverse" id="manage-lock">锁定</button>
                      <button class="btn btn-inverse" id="manage-unlock">解除锁定</button>
-                     <button class="btn btn-inverse" id="manage-set-role">设置角色</button>
-                     <button class="btn btn-inverse" id="manage-lock-key">绑定密钥</button>
-                     <button class="btn btn-inverse" id="manage-unbind-otp">解除谷歌otp绑定</button>
-                     <button class="btn btn-inverse" id="manage-reset-pwd">重置登陆密码</button>
+                     <button class="btn btn-inverse" id="manage-setRole">分配管理角色</button>
+                     <button class="btn btn-inverse" id="manage-viewTF">查看谷歌秘钥</button>
+                     <button class="btn btn-inverse" id="manage-resetPwd">重置登陆密码</button>
+                     <button class="btn btn-inverse" id="manage-depositCodeAuth">充值码授权</button>
+                     <button class="btn btn-inverse" id="manage-unbindOtp">解除谷歌otp绑定</button>
                   </div>
                   <div class="col-xs-4 col-md-4 dataTable-filter text-right">
                      <label for="input-filter">
@@ -36,7 +37,7 @@
                         <tr v-for="item in mngObj.Items" :data-id="item.Id">
                            <td>{{item.Account}}</td>
                            <td>{{item.NickName}}</td>
-                           <td>{{item.IsLocked ? '已锁定': 'NO'}}</td>
+                           <td><span :class="item.IsLocked ? 'cRed' : ''">{{item.IsLocked ? "已锁定": "No"}}</span></td>
                            <td>{{item.RoleNames}}</td>
                            <td>{{item.DepositAmount}}</td>
                            <td>{{item.CreateTime}}</td>
@@ -99,14 +100,14 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="lock-user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="lock-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success">锁定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngLock()">锁定</a>
                </div>
             </div>
          </div>
@@ -126,44 +127,41 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="unlock-user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="unlock-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success">锁定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngUnlock()">解锁</a>
                </div>
             </div>
          </div>
       </div>
       <!-- 解除锁定 -->
 
-      <!-- 设置角色 -->
-      <div class="modal fade" id="mng-set-role">
+      <!-- 分配管理角色 -->
+      <div class="modal fade" id="mng-setRole">
          <div class="modal-dialog">
             <div class="modal-content">
                <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title">设置角色</h4>
+                  <h4 class="modal-title">分配管理角色</h4>
                </div>
                <div class="modal-body">
                   <form class="form-horizontal">
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="set-user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="set-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
                         </div>
                      </div>
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">角色<span>*</span></label>
                         <div class="col-md-6">
-                           <ul>
-                              <li><label><input type="checkbox" name="roles" /><span>FinancialStaff</span></label></li>
-                              <li><label><input type="checkbox" name="roles" /><span>FinancialManager</span></label></li>
-                              <li><label><input type="checkbox" name="roles" /><span>CustomerService</span></label></li>
-                              <li><label><input type="checkbox" name="roles" /><span>Editor</span></label></li>
+                           <ul class="list-role">
+                              <li v-for="role in roleList"><label><input type="checkbox" name="roles" :data-id="role.id" /><span>{{role.roleName}}</span></label></li>
                            </ul>
                         </div>
                      </div>
@@ -171,48 +169,89 @@
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success">锁定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngSetRole()">锁定</a>
                </div>
             </div>
          </div>
       </div>
-      <!-- 设置角色 -->
-
-      <!-- 绑定密钥  -->
-      <div class="modal fade" id="mng-lock-key">
+      <!-- 分配管理角色 -->
+      
+      <!-- 充值额度授权 -->
+      <div class="modal fade" id="mng-depositCodeAuth">
          <div class="modal-dialog">
             <div class="modal-content">
                <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title">绑定密钥</h4>
+                  <h4 class="modal-title">充值额度授权</h4>
                </div>
                <div class="modal-body">
                   <form class="form-horizontal">
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label" for="key-user">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" id="key-user" readonly />
+                           <input type="text" class="form-control" id="key-user" v-model="mngReset.user" readonly />
                         </div>
                      </div>
                      <div class="form-group">
-                        <label class="col-md-4 control-label custom-label" for="key-TF-KEY">TF-KEY</label>
+                        <label class="col-md-4 control-label custom-label" for="authAmount">额度<span>*</span></label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" id="key-TF-KEY" readonly />
+                           <input type="text" class="form-control" id="authAmount" v-model="authAmount" placeholder="请输入授权额度" />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success">绑定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngDepositCodeAuth()">添加</a>
                </div>
             </div>
          </div>
       </div>
-      <!-- 绑定密钥 -->
+      <!-- 充值额度授权 -->
+
+      <!-- 查看谷歌秘钥  -->
+      <div class="modal fade" id="mng-viewTF">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title">查看谷歌秘钥</h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label" for="key-user">用户名</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" id="key-user" v-model="mngReset.user" readonly />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label" for="key-TF-KEY">TF-KEY</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" id="key-TF-KEY" v-model="gugObj.TF" readonly />
+                        </div>
+                     </div>
+                     <div class="form-group" v-show="!gugObj.isBind">
+                        <label class="col-md-4 control-label custom-label" for="key-code">code</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" id="key-code" v-model="gugObj.optCode" />
+                        </div>
+                        <div class="col-md-2" style="padding-left: 0;">
+                           <a href="javascript:;" class="btn btn-success" @click="mngBindOtp()">绑定</a>
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 查看谷歌秘钥 -->
 
       <!-- 解除谷歌otp绑定 -->
-      <div class="modal fade" id="mng-unbind-otp">
+      <div class="modal fade" id="mng-unbindOtp">
          <div class="modal-dialog">
             <div class="modal-content">
                <div class="modal-header">
@@ -224,14 +263,14 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="opt-user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="opt-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success">解除</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngUnbindOtp()">解除</a>
                </div>
             </div>
          </div>
@@ -239,7 +278,7 @@
       <!-- 解除谷歌otp绑定 -->
 
       <!-- 重置登陆密码  -->
-      <div class="modal fade" id="mng-reset-pwd">
+      <div class="modal fade" id="mng-resetPwd">
          <div class="modal-dialog">
             <div class="modal-content">
                <div class="modal-header">
@@ -291,10 +330,18 @@
          /*选定管理员*/
          $('#manage-table').on('click',function(e){
             e = e || window.event;
-            var $tbody = $(e.target).closest('tbody');
+            var $tbody = $(e.target).closest('tbody'),
+               $tr = $(e.target).closest('tr');
             if($tbody.length != 0){
-               vm.item = $(e.target).closest('tr').attr('data-id');
-               vm.mngReset.user = vm.mngObj.Items[vm.item-1].Account;
+
+               if($tr.hasClass('success')){
+                  $tr.removeClass('success');
+                  vm.item = -1;
+               }else{
+                  $tr.addClass('success').siblings('tr').removeClass('success');
+                  vm.item = $tr.attr('data-id');
+                  vm.mngReset.user = vm.mngObj.Items[vm.item-1].Account;
+               }
             }
          });
 
@@ -311,21 +358,27 @@
                if(vm.IsSelected('未选择任何管理员','请选择要解除锁定的管理员',_id)){
                   $('#mng-unlock').modal('show');
                }
-            }else if('manage-set-role' == _id){
+            }else if('manage-setRole' == _id){
                if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
-                  $('#mng-set-role').modal('show');
+                  vm.getRoles();
+                  $('#mng-setRole').modal('show');
                }
-            }else if('manage-lock-key' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择要绑定的管理员',_id)){
-                  $('#mng-lock-key').modal('show');
+            }else if('manage-depositCodeAuth' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+                  $('#mng-depositCodeAuth').modal('show');
                }
-            }else if('manage-unbind-otp' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){                  
-                  $('#mng-unbind-otp').modal('show');
+            }else if('manage-viewTF' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+                  vm.getGoogleKey();
+                  $('#mng-viewTF').modal('show');
                }
-            }else if('manage-reset-pwd' == _id){
+            }else if('manage-unbindOtp' == _id){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+                  $('#mng-unbindOtp').modal('show');
+               }
+            }else if('manage-resetPwd' == _id){
                if (vm.IsSelected('未选择任何管理员','请选择管理员',_id)) {
-                  $('#mng-reset-pwd').modal('show');
+                  $('#mng-resetPwd').modal('show');
                }
             }
          });
@@ -335,7 +388,11 @@
             mngObj: {},
             mngAdd: {account: '',nickName: '',password: ''},
             mngReset: {user: '',pwd: '',repwd: ''},
-            item: -1
+            item: -1,
+            isLock: false,
+            authAmount: '',
+            gugObj: {optCode: '',TF: '加载中...',isBind: true},
+            roleList: []
          }
       },
       methods:{
@@ -381,11 +438,13 @@
          mngLock: function(){
             var vm = this;
 
+            vm.isLock = true;
             Custom.ajaxFn('/Manager/UpdateLockStatus',{
-               data: {id: vm.item,isLock: true},
+               data: {id: vm.item,isLock: vm.isLock},
                callback: function(res){
                   if(res.IsSuccess){
-                     $('#mng-reset-pwd').modal('hide');
+                     vm.mngObj.Items[vm.item-1].IsLocked = vm.isLock;
+                     $('#mng-lock').modal('hide');
                   }
                },
                errorCallback: function(res){
@@ -396,6 +455,42 @@
          // 解除锁定
          mngUnlock: function(){
             var vm = this;
+
+            vm.isLock = false;
+            Custom.ajaxFn('/Manager/UpdateLockStatus',{
+               data: {id: vm.item,isLock: vm.isLock},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.mngObj.Items[vm.item-1].IsLocked = vm.isLock;
+                     $('#mng-unlock').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 分配管理角色
+         mngSetRole: function(){
+            var vm = this,
+               $list = $('input[name="roles"]:checked'),
+               ids = [];
+
+            $list.each(function(){
+               ids.push($(this).attr('data-id'));
+            });
+
+            Custom.ajaxFn('/Manager/SetRoles',{
+               data: {id: vm.item,roles: ids.join(',')},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     $('#mng-setRole').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
          },
          // 修改密码
          mngModify: function(){
@@ -406,13 +501,93 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.mngReset = {user: '',pwd: '',repwd: ''};
-                     $('#mng-reset-pwd').modal('hide');
+                     $('#mng-resetPwd').modal('hide');
                   }
                },
                errorCallback: function(res){
                   console.log(res);
                }
             });
+         },
+         // 充值额度授权
+         mngDepositCodeAuth: function(){
+            var vm = this;
+
+            if(isNaN(vm.authAmount)){
+               return false;
+            }
+            Custom.ajaxFn('/Manager/AddDepositAmount',{
+               data: {id: vm.item,amount: vm.authAmount},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.authAmount = '';
+                     $('#mng-depositCodeAuth').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 绑定谷歌otp
+         mngBindOtp: function(){
+            var vm = this;
+            
+            Custom.ajaxFn('/Manager/BindOtp',{
+               data: {id: vm.item,code: vm.gugObj.optCode},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.gugObj = {optCode: '',TF: '加载中...',isBind: false};
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 解除谷歌otp绑定
+         mngUnbindOtp: function(){
+            var vm = this;
+            
+            Custom.ajaxFn('/Manager/UnBindOtp',{
+               data: {id: vm.item},
+               callback: function(res){
+                  if(res.IsSuccess){
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 获取谷歌密钥
+         getGoogleKey: function(){
+            var vm = this;
+
+            vm.gugObj.TF = '加载中...';
+            Custom.ajaxFn('/Manager/GetOtpSecretKey',{
+               data: {id: vm.item},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.gugObj.TF = res.Data.SecretKey;
+                     vm.gugObj.isBind = res.Data.IsBind;
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+                  vm.gugObj.TF = '加载出错，请稍后重试！';
+               }
+            });
+         },
+         // 获取角色列表
+         getRoles: function(){
+            var vm = this;
+
+            vm.roleList = [
+               {id: 1,roleName: 'FinancialStaff'},
+               {id: 2,roleName: 'FinancialManager'},
+               {id: 3,roleName: 'CustomerService'},
+               {id: 4,roleName: 'Editor'}];
          },
          // 选择一个管理员
          IsSelected: function(title,txt,id){
@@ -454,6 +629,7 @@
             >tr{
                >td{
                   &:nth-child(5){text-align: right;}
+                  >.cRed{color: #f00;}
                }
             }
          }

@@ -34,6 +34,7 @@
    </div>
 </template>
 <script>
+   import Custom from '../../assets/js/custom'
    export default{
       name: 'header',
       mounted(){
@@ -41,8 +42,18 @@
       },
       methods: {
          logout: function(){
-            var _self = this;
-            _self.$router.push('/login');
+            var vm = this;
+
+            Custom.ajaxFn('/Home/LoginOut',{
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.$router.push('/login');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
          }
       },
       replace: true

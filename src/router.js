@@ -6,6 +6,7 @@ function configRouter(){
       {path: '/main', name: 'main', component: require('./components/main'),children: [
          { path: 'adminList', component: require('./components/main/adminList') },
          { path: 'financialList', component: require('./components/main/financialList') },
+         { path: 'moduleManage', component: require('./components/main/moduleManage') },
       ]},
       {path: '*', redirect: '/login'}
    ];

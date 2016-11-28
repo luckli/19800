@@ -1,5 +1,5 @@
 define(function(){
-   var _ip = 'http://10.0.0.218:81'
+   var _ip = 'http://localhost' //10.0.0.218:81
 
    Date.prototype.format = function (format) {
        var o = {
