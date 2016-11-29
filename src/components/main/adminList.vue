@@ -100,7 +100,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="lock-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="lock-user" v-model="mngReset.user" readonly />
                         </div>
                      </div>
                   </form>
@@ -127,7 +127,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="unlock-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="unlock-user" v-model="mngReset.user" readonly />
                         </div>
                      </div>
                   </form>
@@ -154,7 +154,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="set-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="set-user" v-model="mngReset.user" readonly />
                         </div>
                      </div>
                      <div class="form-group">
@@ -263,7 +263,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">用户名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" name="opt-user" v-model="mngReset.user" readonly placeholder="请输入用户名" />
+                           <input type="text" class="form-control" name="opt-user" v-model="mngReset.user" readonly />
                         </div>
                      </div>
                   </form>
@@ -334,11 +334,11 @@
                $tr = $(e.target).closest('tr');
             if($tbody.length != 0){
 
-               if($tr.hasClass('success')){
-                  $tr.removeClass('success');
+               if($tr.hasClass('warning')){
+                  $tr.removeClass('warning');
                   vm.item = -1;
                }else{
-                  $tr.addClass('success').siblings('tr').removeClass('success');
+                  $tr.addClass('warning').siblings('tr').removeClass('warning');
                   vm.item = $tr.attr('data-id');
                   vm.mngReset.user = vm.mngObj.Items[vm.item-1].Account;
                }
@@ -521,6 +521,7 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.authAmount = '';
+                     vm.mngObj.Items[vm.item-1].DepositAmount = res.Data;
                      $('#mng-depositCodeAuth').modal('hide');
                   }
                },
@@ -538,6 +539,7 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.gugObj = {optCode: '',TF: '加载中...',isBind: false};
+                     $('#mng-viewTF').modal('hide');
                   }
                },
                errorCallback: function(res){
@@ -553,6 +555,7 @@
                data: {id: vm.item},
                callback: function(res){
                   if(res.IsSuccess){
+                     $('#mng-unbindOtp').modal('hide');
                   }
                },
                errorCallback: function(res){
@@ -589,10 +592,10 @@
                {id: 3,roleName: 'CustomerService'},
                {id: 4,roleName: 'Editor'}];
          },
-         // 选择一个管理员
+         // 请选择一个管理员
          IsSelected: function(title,txt,id){
             var vm = this;
-            var _class = 'my-sticky'+id;
+            /*var _class = 'my-sticky'+id;
             if(vm.item == -1){
                $.gritter.add({
                   title: title,
@@ -604,7 +607,8 @@
                return false;
             }else{
                return true;
-            }
+            }*/
+            return Custom.isSelected({title: title,txt: txt,id: id,index: vm.item});
          }
       },
       replace: true

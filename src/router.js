@@ -7,6 +7,7 @@ function configRouter(){
          { path: 'adminList', component: require('./components/main/adminList') },
          { path: 'financialList', component: require('./components/main/financialList') },
          { path: 'moduleManage', component: require('./components/main/moduleManage') },
+         { path: 'moduleAuth/:Id', name: 'moduleAuth', component: require('./components/main/moduleAuth') },
       ]},
       {path: '*', redirect: '/login'}
    ];

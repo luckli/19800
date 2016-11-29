@@ -91,6 +91,20 @@ define(function(){
             }
          });
       },
-      dateTimeFormatter: Common.DateTimeFormatter
+      dateTimeFormatter: Common.DateTimeFormatter,
+      isSelected: function(opts){
+        if(opts.index == -1){
+           $.gritter.add({
+              title: opts.title,
+              text: opts.txt,
+              sticky: false,
+              time: 5000,
+              class_name: 'my-sticky'
+           });
+           return false;
+        }else{
+           return true;
+        }
+      }
    }
 });
