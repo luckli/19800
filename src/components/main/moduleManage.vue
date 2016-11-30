@@ -157,7 +157,7 @@
 
             var $tr = $(e.target).closest('tbody>tr'),
                $trs = $(e.target).closest('tbody').find('tr'),
-               $i = $(e.target).closest('tr').find('td:first-child>i'),
+               $i = $tr.find('td:first-child>i'),
                _sign = $tr.attr('data-sign'),
                _id = $tr.attr('data-id'),
                _pid = $tr.attr('data-parent'),k = '';
@@ -351,7 +351,7 @@
    }
 </script>
 <style lang="less">
-   #module-table{margin-top: 20px;
+   #module-table{
       >tbody{
          >tr{cursor: pointer;
             &.hide{display: none;}

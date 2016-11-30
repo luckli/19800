@@ -22,6 +22,7 @@
                         <input type="text" class="form-control input-sm" id="input-filter" placeholder="输入登陆账号进行搜索..." />
                      </label>
                   </div>
+                  <div class="clearfix"></div>
                   <table id="manage-table" class="table table-striped table-bordered">
                      <thead>
                         <tr>
@@ -44,6 +45,7 @@
                         </tr>
                      </tbody>
                   </table>
+                  div.
                </div>
             </div>
          </div>
@@ -622,7 +624,7 @@
          } 
       }
       .dataTable-filter{padding-right: 0;
-         >label{
+         >label{ margin-bottom: 0;
             >span,>input{float: left;}
             >span{display: block; line-height: 30px; padding-right: 10px;}
             >input{width: 83%;}

@@ -134,22 +134,8 @@
                vm.resetInfo();
             }
          });
-         $('#auth-table').on('click',function(e){
-            e = e || window.event;
-            e.preventDefault();
-            e.stopPropagation();
-
-            var $tr = $(e.target).closest('tbody>tr'),
-               $trs = $(e.target).closest('tbody').find('tr'),
-               _id = $tr.attr('data-id');
-            if(vm.index == _id){
-               vm.index = -1
-               $trs.removeClass('warning');
-            }else{
-               vm.index = _id;
-               $tr.addClass('warning').siblings('tr').removeClass('warning');
-            }
-
+         Custom.selectItem('#auth-table',vm.index,function(res){
+            vm.index = res;
          });
 
          $('.manage-btns').on('click',function(e){
@@ -177,14 +163,16 @@
                   $('#auth-add').modal('show');
                }
             }else if('auth-del' == _id){
-               for(var i = 0;i<vm.items.length;i++){
-                  if(vm.index == vm.items[i].Id){
-                     for(var k in vm.items[i]){
-                        vm.addObj[k] = vm.items[i][k];
+               if(vm.isSelected('提示','请选择权限模块')){
+                  for(var i = 0;i<vm.items.length;i++){
+                     if(vm.index == vm.items[i].Id){
+                        for(var k in vm.items[i]){
+                           vm.addObj[k] = vm.items[i][k];
+                        }
                      }
                   }
+                  $('#auth-del').modal('show');
                }
-               $('#auth-del').modal('show');
             }
          });
       },
@@ -193,8 +181,8 @@
          authAdd: function(){
             var vm = this;
             if(isNaN(vm.addObj.Code)){
-               if(Custom.isSelected({title: '提示',txt: '请输入数值',index: -1})){
-                  return false;
+               if(!Custom.isSelected({title: '提示',txt: '请输入数值',index: -1})){
+                  return true;
                }
             }
             if(vm.addObj && vm.addObj.id){
@@ -205,7 +193,6 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.getAuthList();
-                     vm.resetInfo();
                      $('#auth-add').modal('hide');
                   }
                },
@@ -273,10 +260,11 @@
             vm.addObj.IsUsable = false;
          },
          // 请选择一个模块
-         isSelected: function(title,txt,id){
+         isSelected: function(title,txt){
             var vm = this;
             return Custom.isSelected({title: title,txt: txt,index: vm.index});
          }
-      }
+      },
+      replace: true
    }
 </script>

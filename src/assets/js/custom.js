@@ -68,6 +68,7 @@ define(function(){
            return dateValue.format("yyyy-MM-dd");
        }
    };
+
    return {
       ajaxFn: function(url,opts){
          var _url = _ip + url,
@@ -105,6 +106,31 @@ define(function(){
         }else{
            return true;
         }
+      },
+      selectItem: function(sel,index,fnc){
+        $(sel).on('click',function(e){
+            e = e || window.event;
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $tr = $(e.target).closest('tbody>tr'),
+                $tbody = $(e.target).closest('tbody'),
+               $trs = $(e.target).closest('tbody').find('tr'),
+               _id = $tr.attr('data-id');
+            if($tbody.length > 0){
+              
+              if(index == _id){
+                 index = -1
+                 $trs.removeClass('warning');
+              }else{
+                 index = _id;
+                 $tr.addClass('warning').siblings('tr').removeClass('warning');
+              }
+              if(typeof(fnc) == "function"){
+                fnc(index);
+              }
+            }
+        });
       }
    }
 });
