@@ -163,7 +163,7 @@
                _pid = $tr.attr('data-parent'),k = '';
             
             if($tr.length != 0){
-               if(0 == _pid){
+               if(0 == _pid && e.target == $i.get(0)){
                   if(1 == _sign){
                      $i.removeClass('fa-chevron-down').addClass('fa-chevron-up');
                      $trs.each(function(){
@@ -184,12 +184,14 @@
                      $tr.attr('data-sign',1);
                   }
                }
-               if(vm.obj.id == _id){
-                  vm.obj.id = -1;
-                  $trs.removeClass('warning');
-               }else{
-                  vm.obj.id = _id;
-                  $tr.addClass('warning').siblings('tr').removeClass('warning');
+               if(0 != _pid && e.target != $i.get(0)){
+                  if(vm.obj.id == _id){
+                     vm.obj.id = -1;
+                     $trs.removeClass('warning');
+                  }else{
+                     vm.obj.id = _id;
+                     $tr.addClass('warning').siblings('tr').removeClass('warning');
+                  }
                }
             }
          });
