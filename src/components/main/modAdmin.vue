@@ -23,7 +23,7 @@
                      </label>
                   </div>
                   <div class="clearfix"></div>
-                  <table id="manage-table" class="table table-striped table-bordered">
+                  <table id="manage-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
                            <th>登陆账号</th>
@@ -45,7 +45,6 @@
                         </tr>
                      </tbody>
                   </table>
-                  div.
                </div>
             </div>
          </div>
@@ -353,33 +352,33 @@
 
             var _id = $(e.target).attr('id');
             if('manage-lock' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择要锁定的管理员',_id)){
+               if(vm.IsSelected('未选择任何管理员','请选择要锁定的管理员')){
                   $('#mng-lock').modal('show');
                }
             }else if('manage-unlock' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择要解除锁定的管理员',_id)){
+               if(vm.IsSelected('未选择任何管理员','请选择要解除锁定的管理员')){
                   $('#mng-unlock').modal('show');
                }
             }else if('manage-setRole' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员')){
                   vm.getRoles();
                   $('#mng-setRole').modal('show');
                }
             }else if('manage-depositCodeAuth' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员')){
                   $('#mng-depositCodeAuth').modal('show');
                }
             }else if('manage-viewTF' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员')){
                   vm.getGoogleKey();
                   $('#mng-viewTF').modal('show');
                }
             }else if('manage-unbindOtp' == _id){
-               if(vm.IsSelected('未选择任何管理员','请选择管理员',_id)){
+               if(vm.IsSelected('未选择任何管理员','请选择管理员')){
                   $('#mng-unbindOtp').modal('show');
                }
             }else if('manage-resetPwd' == _id){
-               if (vm.IsSelected('未选择任何管理员','请选择管理员',_id)) {
+               if (vm.IsSelected('未选择任何管理员','请选择管理员')) {
                   $('#mng-resetPwd').modal('show');
                }
             }
@@ -595,7 +594,7 @@
                {id: 4,roleName: 'Editor'}];
          },
          // 请选择一个管理员
-         IsSelected: function(title,txt,id){
+         IsSelected: function(title,txt){
             var vm = this;
             /*var _class = 'my-sticky'+id;
             if(vm.item == -1){
@@ -610,7 +609,7 @@
             }else{
                return true;
             }*/
-            return Custom.isSelected({title: title,txt: txt,id: id,index: vm.item});
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       },
       replace: true

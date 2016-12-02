@@ -13,7 +13,7 @@
                      <button class="btn btn-inverse" data-id="mod-auth">模块权限</button>
                   </div>
                   <div class="clearfix"></div>
-                  <table id="module-table" class="table table-bordered">
+                  <table id="module-table" class="table table-bordered table-box">
                      <thead>
                         <tr>
                            <th>名称</th>
@@ -223,7 +223,7 @@
                }
             }else if('mod-auth' == _id){
                if(vm.isSelected('未选择任何模块','请选择一个模块')){
-                  vm.$router.push({name: 'moduleAuth',params:{Id: vm.obj.id}});
+                  vm.$router.push({name: 'modAuth',params:{Id: vm.obj.id}});
                }
             }
          });

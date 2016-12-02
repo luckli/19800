@@ -12,7 +12,7 @@
                      <button class="btn btn-inverse" data-id="auth-modify">修改权限</button>
                   </div>
                   <div class="clearfix"></div>
-                  <table id="auth-table" class="table table-striped table-bordered">
+                  <table id="auth-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
                            <th>Id</th>

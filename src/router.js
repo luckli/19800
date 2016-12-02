@@ -4,12 +4,15 @@ function configRouter(){
       //{path: '/', component: {template: '<router-view></router-view>'}},
       {path: '/login', name: 'login', component: require('./components/login')},
       {path: '/main', name: 'main', component: require('./components/main'),children: [
-         { path: 'moduleAdmin', component: require('./components/main/moduleAdmin') },
-         { path: 'moduleFinancial', component: require('./components/main/moduleFinancial') },
-         { path: 'moduleManage', component: require('./components/main/moduleManage') },
-         { path: 'moduleAuth/:Id', name: 'moduleAuth', component: require('./components/main/moduleAuth') },
-         { path: 'moduleRole', component: require('./components/main/moduleRole') },
-         { path: 'moduleRoleAuth/:Id', name: 'moduleRoleAuth', component: require('./components/main/moduleRoleAuth') }
+         { path: 'modAdmin', component: require('./components/main/modAdmin') },
+         { path: 'modFinancial', component: require('./components/main/modFinancial') },
+         { path: 'modManage', component: require('./components/main/modManage') },
+         { path: 'modAuth/:Id', name: 'modAuth', component: require('./components/main/modAuth') },
+         { path: 'modRole', component: require('./components/main/modRole') },
+         { path: 'modRoleAuth/:Id', name: 'modRoleAuth', component: require('./components/main/modRoleAuth') },
+         { path: 'modUser', component: require('./components/main/modUser') },
+         { path: 'sysCurrency', component: require('./components/main/sysCurrency') },
+         { path: 'sysCapitalAccount', component: require('./components/main/sysCapitalAccount') }
       ]},
       {path: '*', redirect: '/login'}
    ];

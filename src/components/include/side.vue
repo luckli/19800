@@ -22,13 +22,23 @@
                    <span>用户系统</span>
                 </a>
                <ul class="sub-menu">
-                   <li><router-link to="/main/moduleAdmin">管理员列表</router-link></li>
-                   <li><router-link to="/main/moduleFinancial">财务列表</router-link></li>
-                   <li><a href="javascript:;">用户列表</a></li>
-                   <li><a href="javascript:;">用户列表(客)</a></li>
+                   <li><router-link to="/main/modAdmin">管理员列表</router-link></li>
+                   <li><router-link to="/main/modFinancial">财务列表</router-link></li>
+                   <li><router-link to="/main/modUser">用户列表</router-link></li>
                    <li><a href="javascript:;">分红币发放记录</a></li>
-                   <li><router-link to="/main/moduleManage">模块管理</router-link></li>
-                   <li><router-link to="/main/moduleRole">角色管理</router-link></li>
+                   <li><router-link to="/main/modManage">模块管理</router-link></li>
+                   <li><router-link to="/main/modRole">角色管理</router-link></li>
+               </ul>
+            </li>
+            <li class="has-sub">
+               <a href="javascript:;">
+                   <b class="caret pull-right"></b>
+                   <i class="fa fa-2x fa-group"></i>
+                   <span>系统设置 </span>
+                </a>
+               <ul class="sub-menu">
+                   <li><router-link to="/main/sysCurrency">币种列表</router-link></li>
+                   <li><router-link to="/main/sysCapitalAccount">资金账户列表</router-link></li>
                </ul>
             </li>
               <!-- begin sidebar minify button -->

@@ -12,7 +12,7 @@
                      <button class="btn btn-inverse" data-id="role-setRoleAuth">分配角色权限</button>
                   </div>
                   <div class="clearfix"></div>
-                  <table id="role-table" class="table table-striped table-bordered">
+                  <table id="role-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
                            <th>Id</th>
@@ -118,7 +118,7 @@
                }
             }else if('role-setRoleAuth' == _id){
                if(vm.isSelected('提示','请选择角色')){
-                  vm.$router.push({name: 'moduleRoleAuth',params: {Id: vm.index}});
+                  vm.$router.push({name: 'modRoleAuth',params: {Id: vm.index}});
                }
             }
          });

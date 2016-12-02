@@ -11,7 +11,7 @@
                      <button class="btn btn-inverse" data-id="auth-save" v-else @click="setRoleAuth()">保存</button>
                   </div>
                   <div class="clearfix"></div>
-                  <table id="roleAuth-table" class="table table-bordered">
+                  <table id="roleAuth-table" class="table table-bordered table-box">
                      <thead>
                         <tr>
                            <th>模块</th>
@@ -23,13 +23,16 @@
                         <tr v-for="role in roleList" :class="role.ParentId == 0 ? 'success':''" :data-key="role.ModuleKey" :data-id="role.Id" :data-parent="role.ParentId" data-sign="1">
                            <td v-if="role.ParentId == 0"><i class="fa fa-chevron-down"></i>{{role.Name}}</td>
                            <td v-else><span class="txt-indent">{{role.Name}}</span></td>
-                           <td><input type="checkbox" :name="role.Id" :id="role.Id" /></td>
+                           <td>
+                              <input type="checkbox" :name="role.Id" :id="role.Id" :data-id="0" v-if="role.isChecked" checked />
+                              <input type="checkbox" :name="role.Id" :id="role.Id" :data-id="0" v-else />
+                           </td>
                            <td>
                               <ul class="role-list" v-if="role.ParentId != 0 && role.Limits.length != 0">
                                  <li v-for="limit in role.Limits">
                                     <label>
-                                       <input type="checkbox" :name="role.Id" :id="limit.Code" v-if="limit.isChecked" checked>
-                                       <input type="checkbox" :name="role.Id" :id="limit.Code" v-else><span>{{limit.Name}}</span>
+                                       <input type="checkbox" :name="role.Id" :id="limit.Code" v-if="limit.isChecked" checked />
+                                       <input type="checkbox" :name="role.Id" :id="limit.Code" v-else /><span>{{limit.Name}}</span>
                                     </label>
                                  </li>
                               </ul>
@@ -104,15 +107,17 @@
                      });
                      $trs.each(function(){
                         var id = $(this).attr('data-id'),
+                           $td = $(e.target),
                            $val = $(this).find('.role-list input[type="checkbox"]:checked');
                         if(id == _pId && 0 == ids.length){
                            $(this).find('>td>input[type="checkbox"]').attr('checked',false);
                         }
-                        if(id == $val.attr('name')){
+                        if($td.attr('id') == id){
+                           //console.log(id , $val.attr('name'));
                            $val.attr('checked',false);
+                        }else{
                         }
                      });
-
                   }
                }else if(0 != _pId && 0 != $list.length){
                   if($(e.target).attr('checked')){
@@ -173,14 +178,6 @@
                   $tr.attr('data-sign',1);
                }
             }
-            /*if(0 != _pId && e.target != $i.get(0)){
-
-               if(vm.index == _id){
-                  vm.index = -1;
-               }else{
-                  vm.index = _id;
-               }
-            }*/
          });
       },
       methods: {
@@ -244,38 +241,28 @@
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data,rlist = vm.roleList,_tmp = [];
-                     
                      for(var i = 0;i< rlist.length;i++){
                         var k = rlist[i].ModuleKey,
                            clist = list[k];
                         if(clist && clist.length > 0){
-                           _tmp = rlist[i].Limits.slice(0,2);
-                           for(var d = 0;d< _tmp.length;d++){
-                              console.log(_tmp[d]);
-                              rlist[i].isChecked = true;
-                           }
-                           //vm.$set(rlist[i].isChecked,true);
-                           for(var j = 2;j<rlist[i].Limits.length;j++){
-                              var code = rlist[i].Limits[j].Code;
-                              if(clist == code){
-                                 rlist[i].Limits[j].isChecked = true;
-                                 //_tmp.push();
+                              vm.$set(rlist[i],'isChecked',true);
+                              //rlist[i].isChecked = true;
+                           for(var j = 0;j<rlist[i].Limits.length;j++){
+                              if(0 < rlist[i].Limits.length){
+                                 var code = rlist[i].Limits[j].Code;
+                                 for(var c = 0;c<clist.length;c++){
+                                    if(clist[c] == code){
+                                       vm.$set(rlist[i].Limits[j],'isChecked',true);
+                                       //rlist[i].Limits[j].isChecked = true;
+                                       //_tmp.push();
+                                    }
+                                 }
                               }
                            }
                         }
                      }
                      console.log(rlist);
-                     /*for(var i = 0;i< rlist.length;i++){
-                        var k = rlist[i].ModuleKey;
-                        for(var j = 0;j<rlist[i].Limits.length;j++){
-                           var flag = rlist[i].Limits[j].isChecked;
-                           if(flag){
-
-                           }
-                        }
-                     }*/
-                     //for()
-                     $('#roleAuth-table>tbody>tr').click();
+                     //$('#roleAuth-table>tbody>tr').click();
                   }
                },
                errorCallback: function(res){
@@ -304,26 +291,40 @@
          },
          // 获取保存数据
          getSaveData: function(){
-            var vm = this,obj = {roleId: vm.pId,data: []};
+            var vm = this,obj = {roleId: vm.pId,data: []},data = [],_data = [],_data2 = [];
             //{roleId:1,data:[{ModuleKey:'key',Limits:[1,2,3]}]}
             $('#roleAuth-table>tbody>tr').each(function(){
                var key = $(this).attr('data-key'),
                   pid = $(this).attr('data-parent'),
-                  $list = $(this).find('.role-list input[type="checkbox"]'),tmp = [];
-                  
-                  $list.each(function(){
-                     var id = $(this).attr('name'),
-                        $val = $(this).closest('tbody'),
-                        $parent = $(this).closest('tr>td>input[name="'+pid+'"]');
-                     if(!!$(this).attr('checked')){
-                        tmp.push($val.find('tr>td>input[name="'+id+'"]').attr('id'));
-                        tmp.push($val.find('tr>td>input[name="'+pid+'"]').attr('id'));
-                        tmp.push($(this).attr('id'));
-                     }
+                  $val = $(this).find('td>input[type="checkbox"]:checked'),
+                  $list = $(this).find('.role-list input[type="checkbox"]:checked'),tmp = [],tmp2 = [];
+                  $val.each(function(){
+                     tmp.push($(this).attr('data-id'));
                   });
-                  obj.data.push({ModuleKey: key,Limits: tmp});
+                  _data.push({ModuleKey: key,Limits: tmp});
+                  $list.each(function(){
+                     var id = $(this).attr('name');
+                        /*$val = $(this).closest('tbody'),
+                        $parent = $(this).closest('tr>td>input[name="'+pid+'"]');*/
+                        //tmp.push($val.find('tr>td>input[name="'+id+'"]').attr('id'));
+                        //tmp.push($val.find('tr>td>input[name="'+pid+'"]').attr('id'));
+                        tmp2.push($(this).attr('id'));
+                  });
+
+                  _data2.push({ModuleKey: key,Limits: tmp2});
             });
-            console.log(obj.data);
+            for(var i = 0;i<_data.length;i++){
+
+               for(var j = 0;j <_data2.length;j++){
+                  if(_data[i].ModuleKey == _data2[j].ModuleKey && 0 == _data[i].Limits.length){
+                     data.push(_data[i]);
+                  }else if(_data[i].ModuleKey == _data2[j].ModuleKey && 0 != _data[i].Limits.length){
+                     _data2[j].Limits.unshift(_data[i].Limits[0]);
+                     data.push(_data2[j]);
+                  }
+               }
+            }
+            obj.data = data;
             return obj;
          }
       },
