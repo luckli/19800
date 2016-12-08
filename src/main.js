@@ -8,7 +8,7 @@ Vue.use(VueRouter);
 Vue.use(VueResource);
 
 var router = new VueRouter({
-   mode: 'history',
+   mode: 'hash',
    base: __dirname,
    routes: configRouter(router)
 });

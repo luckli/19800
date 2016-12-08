@@ -33,8 +33,40 @@
             <li class="has-sub">
                <a href="javascript:;">
                    <b class="caret pull-right"></b>
+                   <i class="fa fa-2x fa-fire"></i>
+                   <span>运营管理</span>
+                </a>
+               <ul class="sub-menu">
+                   <li><router-link to="/main/buzAccount">账户列表</router-link></li>
+               </ul>
+            </li>
+            <li class="has-sub">
+               <a href="javascript:;">
+                   <b class="caret pull-right"></b>
+                   <i class="fa fa-2x fa-gift"></i>
+                   <span>提现管理</span>
+                </a>
+               <ul class="sub-menu">
+                   <li><router-link to="/main/cashCnyList">人民币提现列表</router-link></li>
+               </ul>
+            </li>
+            <li class="has-sub">
+               <a href="javascript:;">
+                   <b class="caret pull-right"></b>
+                   <i class="fa fa-2x fa-money"></i>
+                   <span>充值管理</span>
+                </a>
+               <ul class="sub-menu">
+                   <li><router-link to="/main/rcgRechargeList">充值码列表</router-link></li>
+                   <li><router-link to="/main/rcgCnyPending">Cny待确认充值</router-link></li>
+                   <li><router-link to="/main/rcgCoinList">Coin充值列表</router-link></li>
+               </ul>
+            </li>
+            <li class="has-sub">
+               <a href="javascript:;">
+                   <b class="caret pull-right"></b>
                    <i class="fa fa-2x fa-group"></i>
-                   <span>系统设置 </span>
+                   <span>系统设置</span>
                 </a>
                <ul class="sub-menu">
                    <li><router-link to="/main/sysCurrency">币种列表</router-link></li>
@@ -51,13 +83,14 @@
    </div>
 </template>
 <script>
-   import '../../../static/lib/jquery-1.9.1.min';
-   import '../../../static/lib/jquery-migrate-1.1.0.min'
-   import '../../../static/lib/jquery-ui.min'
-   import '../../../static/lib/bootstrap/js/bootstrap.min'
-   import '../../../static/lib/jquery.slimscroll'
-   import '../../../static/lib/jquery.gritter.min'
-   import App from '../../../static/lib/apps.min'
+  import '../../assets/lib/jquery-1.9.1.min'
+   //import '../../../static/lib/jquery-1.9.1.min';
+   import '../../assets/lib/jquery-migrate-1.1.0.min'
+   import '../../assets/lib/jquery-ui.min'
+   import '../../assets/lib/bootstrap/js/bootstrap.min'
+   import '../../assets/lib/jquery.slimscroll'
+   import '../../assets/lib/jquery.gritter.min'
+   import App from '../../assets/lib/apps.min'
    export default {
       name: 'side',
       mounted(){

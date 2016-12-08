@@ -232,6 +232,12 @@
                            <input type="text" class="form-control" id="key-TF-KEY" v-model="gugObj.TF" readonly />
                         </div>
                      </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label scanning">扫一扫</label>
+                        <div class="col-md-6">
+                           <p id="qrcode"></p>
+                        </div>
+                     </div>
                      <div class="form-group" v-show="!gugObj.isBind">
                         <label class="col-md-4 control-label custom-label" for="key-code">code</label>
                         <div class="col-md-6">
@@ -319,7 +325,8 @@
    </div>
 </template>
 <script>
-   import '../../../static/lib/jquery.gritter'
+   import '../../assets/lib/jquery.gritter'
+   import '../../assets/lib/jquery.qrcode'
    import Custom from '../../assets/js/custom'
    export default {
       name: 'adminList',
@@ -382,6 +389,12 @@
                   $('#mng-resetPwd').modal('show');
                }
             }
+         });
+         $('.scanning').on('mouseover',function(){
+            $('#qrcode').animate({height: 100},1000);
+         });
+         $('.scanning').on('mouseout',function(){
+            $('#qrcode').animate({height: 0},1000);
          });
       },
       data(){
@@ -574,6 +587,8 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.gugObj.TF = res.Data.SecretKey;
+                     $('#qrcode>canvas').remove();
+                     $('#qrcode').qrcode({width:100,height:100,correctLevel:0,text: res.Data.SecretKey});
                      vm.gugObj.isBind = res.Data.IsBind;
                   }
                },

@@ -10,8 +10,8 @@
 <script>
    import Headers from '../components/include/header'
    import Side from '../components/include/side'
-   import '../../static/lib/default'
-   import Pace from '../../static/lib/pace.min'
+   import '../assets/lib/default'
+   import Pace from '../assets/lib/pace.min'
 
    export default {
       name: 'main',

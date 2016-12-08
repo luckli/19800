@@ -8,5 +8,24 @@ ul{padding-left: 0; margin-bottom: 0;}
       }
    }
 }
-.table-box{margin-top: 20px;}
+.table-box{margin-top: 10px;}
 .txt-indent{margin-left: 40px;}
+.form-horizontal{
+   &.form-bordered{
+      .form-group{border-bottom: none;
+         >.control-label{border-right: none;}
+         >div{border-left: none;}
+      }
+   }
+   .form-group{
+      >div{
+         >p#qrcode{margin-bottom: 0; height: 0; overflow: hidden;}
+      }
+   }
+}
+.radio-status{
+   >label{margin-bottom: 0; margin-top: 17px;
+      >input[type="radio"]{margin-top: 0;}
+      >*{vertical-align: middle;}
+   }
+}

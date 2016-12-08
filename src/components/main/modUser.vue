@@ -35,12 +35,15 @@
                            <td>{{list.Phone}}</td>
                            <td>{{!!list.Phone ? '手机':'No'}}</td>
                            <td>2016-09-27 14:57:30</td>
-                           <td><span v-if="0 == list.Status">注册未激活</span><span v-if="1 == list.Status">正常</span><span v-if="2 == list.Status">锁定</span></td>
-                           <td><span v-if="0 == list.LockType">未锁定</span><span v-if="1 == list.LockType">管理员锁定</span><span v-if="4 == list.LockType">系统自动锁定</span><span v-if="8 == list.LockType">用户自己锁定</span><span v-if="16 == list.LockType">交易异常锁定</span><span v-if="0 != list.LockType || 1 != list.LockType || 4 == list.LockType || 8 == list.LockType ||16 == list.LockType">None</span></td>
+                           <td><span v-if="1 == list.Status">未激活</span><span v-if="2 == list.Status">激活</span><span v-if="4 == list.Status">锁定</span><span v-if="5 == list.Status">未激活且被锁定</span><span v-if="6 == list.Status">激活被锁定</span></td>
+                           <td><span v-if="0 == list.LockType">未锁定</span><span v-if="1 == list.LockType">管理员锁定</span><span v-if="4 == list.LockType">系统自动锁定</span><span v-if="8 == list.LockType">用户自己锁定</span><span v-if="16 == list.LockType">交易异常锁定</span><span v-if="(0 != list.LockType) && (1 != list.LockType) && (4 != list.LockType) && (8 != list.LockType) && (16 != list.LockType)">None</span></td>
                            <td>{{list.VerifyLevel}}</td>
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(pageObj.index*10)-9}}</span> 至 <span>{{pageObj.index*10}}</span> 项结果，共 <span>{{pageObj.items}}</span> 项</label>
+                  </div>
                </div>
             </div>
          </div>
@@ -51,7 +54,13 @@
             <div class="modal-content">
                <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title">确认要锁定吗？</h4>
+                  <h4 class="modal-title">
+                     <span v-show="1 == sign">确认要锁定吗？</span>
+                     <span v-show="2 == sign || 3 == sign">确认解除锁定吗？</span>
+                     <span v-show="4 == sign">确定要解除用户的谷歌身份验证吗？</span>
+                     <span v-show="5 == sign">确定要解除用户的绑定手机吗？</span>
+                     <span v-show="6 == sign">修改vip等级</span>
+                  </h4>
                </div>
                <div class="modal-body">
                   <form class="form-horizontal">
@@ -61,57 +70,39 @@
                            <input type="text" class="form-control" v-model="userObj.name" readonly />
                         </div>
                      </div>
+                     <div class="form-group" v-if="6 == sign">
+                        <label class="col-md-4 control-label custom-label">vip等级</label>
+                        <div class="col-md-6">
+                           <select v-model="vipId" class="form-control">
+                              <option v-for="vip in vips" :value="vip.id">{{vip.val}}</option>
+                           </select>
+                        </div>
+                     </div>
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">备注</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="remark" readonly />
+                           <input type="text" class="form-control" v-model="remark" />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="1 == sign" @click="">锁定</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="2 == sign" @click="">解锁</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="3 == sign" @click="">解锁</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="4 == sign" @click="">确定</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="5 == sign" @click="">解除</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="6 == sign" @click="">确认</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="1 == sign" @click="toLock()">锁定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="2 == sign" @click="todLock()">解锁</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="3 == sign" @click="tofLock()">解锁</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="4 == sign" @click="toUnBindOtp()">确定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="5 == sign" @click="toUnBindPhone()">解除</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="6 == sign" @click="toSetVipLevel()">确认</a>
                </div>
             </div>
          </div>
       </div>
       <!-- 锁定 -->
-
-      <!-- 普通解锁 -->
-      <div class="modal fade" id="user-dLock">
-         <div class="modal-dialog">
-            <div class="modal-content">
-               <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title">确认要解除锁定吗？</h4>
-               </div>
-               <div class="modal-body">
-                  <form class="form-horizontal">
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">用户名</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" name="unlock-name" v-model="userObj.name" readonly />
-                        </div>
-                     </div>
-                  </form>
-               </div>
-               <div class="modal-footer">
-                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="">解锁</a>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!-- 普通解锁 -->
    </div>
 </template>
 <script>
+   import '../../assets/css/reset'
    import Custom from '../../assets/js/custom'
    export default {
       name: 'user',
@@ -120,6 +111,9 @@
             item: -1,
             sign: 1,
             uList: [],
+            vipId: -1,
+            vips: [{id: -1,val:'请选择'},{id: 1,val:'Vip0'},{id: 2,val:'Vip1'},{id: 3,val:'Vip2'},{id: 4,val:'Vip3'},{id: 5,val:'Vip4'},{id: 6,val:'Vip5'},{id: 7,val:'Vip6'},{id: 8,val:'Vip7'},{id: 9,val:'Vip8'},{id: 10,val:'Vip9'},{id: 11,val:'Vip10'}],
+            pageObj: {index: 1,size: 10,items: 0},
             remark: '',
             searchObj: {email: '',phone: '',id: ''},
             userObj: {name: ''}
@@ -134,11 +128,19 @@
             for(var i =0;i<vm.uList.length;i++){
                if(res == vm.uList[i].Id){
                   vm.userObj.name = vm.uList[i].RealName;
+                  vm.vipId = vm.uList[i].VipLevel;
                }
             }
          });
 
          vm.getUserList();
+
+         // 关闭重置模态框
+         $(".modal").on("hidden.bs.modal", function() {
+            vm.userObj.name = '';
+            vm.remark = '';
+            vm.vipId = -1;
+         });
          // 显示弹层
          $('.manage-btns').on('click',function(e){
             e = e || window.event;
@@ -179,15 +181,133 @@
          });
       },
       methods:{
+         // 锁定
+         toLock: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/User/Lock',{
+               data: {id: vm.item,remark: vm.remark},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.remark = '';
+                     vm.getUserList();
+                     $('#user-lock').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 普通解锁
+         todLock: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/User/UnLock',{
+               data: {id: vm.item,remark: vm.remark},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.remark = '';
+                     vm.getUserList();
+                     $('#user-lock').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 强制解锁
+         tofLock: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/User/MandatoryUnLock',{
+               data: {id: vm.item,remark: vm.remark},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.remark = '';
+                     vm.getUserList();
+                     $('#user-lock').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 解绑谷歌
+         toUnBindOtp: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/User/UnBindOtp',{
+               data: {id: vm.item,remark: vm.remark},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.remark = '';
+                     vm.getUserList();
+                     $('#user-lock').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 解除手机绑定
+         toUnBindPhone: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/User/UnBindPhone',{
+               data: {id: vm.item,remark: vm.remark},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.remark = '';
+                     vm.getUserList();
+                     $('#user-lock').modal('hide');
+                  }else{
+                     Custom.isSelected({title: title,txt: txt,index: -1})
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 设置会员等级
+         toSetVipLevel: function(){
+            var vm = this;
+
+            if(-1 == vm.vipId){
+               Custom.isSelected({title: '提示',txt: '请选择会员等级',index: -1});
+               return false;
+            }
+            Custom.ajaxFn('/User/SetVipLevel',{
+               data: {id: vm.item,level: vm.vipId,remark: vm.remark},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.remark = '';
+                     vm.vipId = -1;
+                     vm.getUserList();
+                     $('#user-lock').modal('hide');
+                  }else{
+                     Custom.isSelected({title: title,txt: txt,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
          // 获取用户列表
          getUserList: function(){
             var vm = this;
             
             Custom.ajaxFn('/User/GetPageList',{
-               data: {email: vm.searchObj.email,phone: vm.searchObj.phone,id: vm.searchObj.id,page: 1,pageSize: 10},
+               data: {email: vm.searchObj.email,phone: vm.searchObj.phone,id: vm.searchObj.id,page: vm.pageObj.index,pageSize: vm.pageObj.size},
                callback: function(res){
                   if(res.IsSuccess){
                      vm.uList = res.Data.Items;
+                     vm.pageObj.items = res.Data.TotalItems;
                   }
                },
                errorCallback: function(res){
