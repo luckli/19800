@@ -10,37 +10,36 @@
                      <button class="btn btn-inverse" data-id="recharge-generate">生成充值码</button>
                      <button class="btn btn-inverse" data-id="recharge-destroy">销毁充值码</button>
                      <button class="btn btn-inverse" data-id="recharge-mngDestroy">管理员销毁充值码</button>
-                     <button class="btn btn-inverse" data-id="recharge-mngView">管理员查看所有充值码</button>
                      <button class="btn btn-inverse" data-id="recharge-csOnlySeeMyself">查看自己的充值码</button>
                   </div>
                   <div class="col-xs-4 col-md-4 radio-status text-right">
-                     <label><input type="radio" name="status" value="0" v-model="status" @change="getList()" /><span>全部</span></label>
-                     <label><input type="radio" name="status" value="1" v-model="status" @change="getList()" /><span>未使用</span></label>
-                     <label><input type="radio" name="status" value="2" v-model="status" @change="getList()" /><span>已使用</span></label>
-                     <label><input type="radio" name="status" value="3" v-model="status" @change="getList()" /><span>已销毁</span></label>
+                     <label><input type="radio" name="status" value="0" v-model="status" @change="getCodeList()" /><span>全部</span></label>
+                     <label><input type="radio" name="status" value="1" v-model="status" @change="getCodeList()" /><span>未使用</span></label>
+                     <label><input type="radio" name="status" value="2" v-model="status" @change="getCodeList()" /><span>已使用</span></label>
+                     <label><input type="radio" name="status" value="3" v-model="status" @change="getCodeList()" /><span>已销毁</span></label>
                   </div>
                   <div class="clearfix"></div>
                   <table id="account-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
                            <th>Id</th>
-                           <th>收款账号</th>
+                           <th>户名</th>
                            <th>金额</th>
                            <th>状态</th>
                            <th>创建人</th>
                            <th>创建日期</th>
-                           <th>创建日期{{0 == items.length}}</th>
+                           <th>使用时间</th>
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="item in items">
+                        <tr v-for="item in items" :data-id="item.Id">
                            <td>{{item.Id}}</td>
                            <td>{{item.UserName}}</td>
-                           <td>{{item.Balance}}</td>
-                           <td>{{item.LockedAmount}} %</td>
-                           <td>{{item.TotalAmount}}</td>
-                           <td>{{item.UpdatedAt}}</td>
-                           <td>{{item.UpdatedAt}}</td>
+                           <td>{{item.Amount}}</td>
+                           <td><span v-if="1==item.Status">未使用</span><span v-if="2==item.Status">已使用</span><span v-if="3==item.Status">已销毁</span> {{item.Code}}-{{item.Password}}</td>
+                           <td>{{item.CreatedBy}}</td>
+                           <td>{{item.CreatedAt}}</td>
+                           <td>{{item.UsedAt}}</td>
                         </tr>
                         <tr v-if="0 == items.length">
                            <td colspan="7" style="text-align: center;">无数据</td>
@@ -64,8 +63,8 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">资金来源ID<span>*</span></label>
                         <div class="col-md-6">
-                           <select v-model="genObj.fundSourceId" class="form-control">
-                              <option v-for="bank in banks" :value="bank.Id">{{bank.val}}</option>
+                           <select v-model="genObj.capitalAccountId" class="form-control">
+                              <option v-for="bank in banks" :value="bank.Id">{{bank.AccountNumber}}</option>
                            </select>
                         </div>
                      </div>
@@ -108,17 +107,11 @@
                            <input type="text" class="form-control" v-model="item" readonly />
                         </div>
                      </div>
-                     <!-- <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">充值码金额<span>*</span></label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="genObj.amount" readonly />
-                        </div>
-                     </div> -->
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="destroyMyCode()">销毁</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="destroyCode()">销毁</a>
                </div>
             </div>
          </div>
@@ -134,8 +127,9 @@
       data(){
          return{
             item: -1,
-            genObj: {fundSourceId: '',amount: 0,password: ''},
+            genObj: {capitalAccountId: '',amount: 0,password: ''},
             pageObj: {index: 1,size: 10},
+            sign: 1,
             banks: [],
             status: 0,
             items: []
@@ -144,21 +138,30 @@
       mounted(){
          var vm =this;
 
-         vm.getList();
+         vm.getCodeList();
          Custom.selectItem('#account-table',vm.item,function(res){
             vm.item = res;
          });
          // 关闭重置模态框
          $(".modal").on("hidden.bs.modal", function() {
-            vm.genObj = {fundSourceId: '',amount: 0,password: ''};
+            vm.genObj = {capitalAccountId: '',amount: 0,password: ''};
          });
          $('.manage-btns').on('click',function(e){
             e = e || window.event;
 
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择需要销毁的充值码";
             if('recharge-generate' == _id){
+               if(0 == vm.banks.length){
+                  vm.getCapitalAccount();
+               }
                $('#rcg-generate').modal('show');
             }else if('recharge-destroy' == _id){
+               vm.sign = 1;
+               if(vm.IsSelected(title,info)){
+                  $('#rcg-destroy').modal('show');
+               }
+            }else if('recharge-mngDestroy' == _id){
+               vm.sign = 2;
                if(vm.IsSelected(title,info)){
                   $('#rcg-destroy').modal('show');
                }
@@ -166,22 +169,22 @@
          });
       },
       methods:{
-         // 获取充值码列表
-         getList: function(){
-            var vm = this;
-
-            vm.getAllRcgList();
-            vm.getCodeList();
-         },
-         // 获取当前用户生成的所有充值码列表
-         getAllRcgList: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Deposit/GetMyCodeList',{
+         // 管理员查看所有充值码
+         getCodeList: function(){
+            var vm = this,url = '/Deposit/GetCodeList';
+            if(1!= 1){
+               url = '/Deposit/GetMyCodeList'
+            }
+            Custom.ajaxFn(url,{
                data: {status: vm.status,pageIndex: vm.pageObj.index,pageSize: vm.pageObj.size},
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.items = res.Data.Items;
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                        list[i].UsedAt = Custom.dateTimeFormatter(list[i].UsedAt);
+                     }
+                     vm.items = list;
                   }
                },
                errorCallback: function(res){
@@ -190,19 +193,19 @@
                }
             });
          },
-         // 管理员查看所有充值码
-         getCodeList: function(){
+         // 获取资金账号列表
+         getCapitalAccount: function(){
             var vm = this;
 
-            Custom.ajaxFn('/Deposit/GetCodeList',{
-               data: {status: vm.status,pageIndex: vm.pageObj.index,pageSize: vm.pageObj.size},
+            Custom.ajaxFn('/CapitalAccount/List',{
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.items = res.Data.Items;
+                     vm.banks = res.Data;
+                     vm.genObj.capitalAccountId = vm.banks[0].Id;
                   }
                },
                errorCallback: function(res){
-                  vm.items = [];
+                  vm.banks = [];
                   Custom.isSelected({title: '提示',txt: '查看失败，'+res.statusText,index: -1});
                }
             });
@@ -225,29 +228,18 @@
             });
          },
          // 销毁充值码
-         destroyMyCode: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Deposit/DestroyMyCode',{
-               data: {depositCodeId: vm.item},
-               callback: function(res){
-                  if(res.IsSuccess){
-                     $('#rcg-destroy').modal('hide');
-                  }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
-         },
-         // 管理员销毁充值码
          destroyCode: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Deposit/DestroyCode',{
+            var vm = this,url = '/Deposit/DestroyMyCode';
+            if(1 == vm.sign){
+               url = '/Deposit/DestroyMyCode';
+            }else if(2 == vm.sign){
+               url = '/Deposit/DestroyCode';
+            }
+            Custom.ajaxFn(url,{
                data: {depositCodeId: vm.item},
                callback: function(res){
                   if(res.IsSuccess){
+                     vm.getCodeList();
                      $('#rcg-destroy').modal('hide');
                   }
                },

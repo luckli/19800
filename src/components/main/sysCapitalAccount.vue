@@ -137,7 +137,7 @@
          $('.manage-btns').on('click',function(e){
             e = e || window.event;
 
-            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择需要销毁的充值码";
+            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个账户";
             if('ca-add' == _id){
                $('#ca-add').modal('show');
             }else if('ca-lock' == _id){

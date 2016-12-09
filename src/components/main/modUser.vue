@@ -147,6 +147,12 @@
 
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个用户";
 
+            for(var i =0;i<vm.uList.length;i++){
+               if(vm.item == vm.uList[i].Id){
+                  vm.userObj.name = vm.uList[i].RealName;
+                  vm.vipId = vm.uList[i].VipLevel;
+               }
+            }
             if('user-lock' == _id){
                vm.sign = 1;
                if(vm.IsSelected(title,info)){

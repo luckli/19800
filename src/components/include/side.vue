@@ -38,6 +38,7 @@
                 </a>
                <ul class="sub-menu">
                    <li><router-link to="/main/buzAccount">账户列表</router-link></li>
+                   <li><router-link to="/main/buzMarketDepth">市场深度</router-link></li>
                </ul>
             </li>
             <li class="has-sub">
@@ -47,7 +48,8 @@
                    <span>提现管理</span>
                 </a>
                <ul class="sub-menu">
-                   <li><router-link to="/main/cashCnyList">人民币提现列表</router-link></li>
+                   <li><router-link to="/main/cashCnyTask">人民币提现任务</router-link></li>
+                   <li><router-link to="/main/cashCoinList">coin提现记录列表</router-link></li>
                </ul>
             </li>
             <li class="has-sub">
