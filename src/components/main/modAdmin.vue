@@ -19,7 +19,7 @@
                   <div class="col-xs-4 col-md-4 dataTable-filter text-right">
                      <label for="input-filter">
                         <span>搜索</span>
-                        <input type="text" class="form-control input-sm" id="input-filter" placeholder="输入登陆账号进行搜索..." />
+                        <input type="text" class="form-control input-sm" v-model="search" placeholder="输入登陆账号进行搜索..." />
                      </label>
                   </div>
                   <div class="clearfix"></div>
@@ -406,7 +406,8 @@
             isLock: false,
             authAmount: '',
             gugObj: {optCode: '',TF: '加载中...',isBind: true},
-            roleList: []
+            roleList: [],
+            search: ''
          }
       },
       methods:{

@@ -6,20 +6,29 @@
             <div class="panel panel-inverse">
                <div class="panel-heading"><h4 class="panel-title">虚拟币充值列表</h4></div>
                <div class="panel-body">
-                  <form class="form-inline text-right">
+                  <div class="col-xs-4 col-md-4 manage-btns">
+                     <button class="btn btn-inverse" data-id="coin-recharge">确认充值</button>
+                     <button class="btn btn-inverse" data-id="coin-revoke">撤销充值</button>
+                  </div>
+                  <form class="col-xs-8 col-md-8 form-inline text-right">
                      <div class="form-group">
                         <label for="">币种</label>
-                        <select v-model="search.currencyId" class="form-control input-sm" @change="toSearch()">
+                        <select v-model="search.currencyId" class="form-control input-sm" @change="getCoinDepositList()">
                            <option v-for="type in CTypeList" :value="type.Id">{{type.Code}}</option>
                         </select>
                      </div>
                      <div class="form-group">
-                        <input type="text" class="form-control input-sm" v-model="search.queryText" @input="toSearch()" placeholder="输入email进行搜索..." />
+                        <input type="text" class="form-control input-sm" v-model="search.queryText" @input="getCoinDepositList()" placeholder="输入email进行搜索..." />
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" v-model="search.beginDate" @change="toSearch()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getCoinDepositList()" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" v-model="search.endDate" @change="toSearch()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getCoinDepositList()" readonly />
+                     </div>
+                     <div class="form-group radio-status">
+                        <label><input type="radio" name="status" value="1" v-model="search.status" @change="getPendingList()" /><span>待确认</span></label>
+                        <label><input type="radio" name="status" value="2" v-model="search.status" @change="getPendingList()" /><span>已完成</span></label>
+                        <label><input type="radio" name="status" value="3" v-model="search.status" @change="getPendingList()" /><span>已失效</span></label>
                      </div>
                   </form>
                   <div class="clearfix"></div>
@@ -38,7 +47,7 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="item in items">
+                        <tr v-for="item in items" :data-id="item.Id">
                            <td>{{item.Id}}</td>
                            <td>{{item.Address}}</td>
                            <td>{{item.Volume}}</td>
@@ -55,25 +64,86 @@
             </div>
          </div>
       </div>
+      <!-- 确认充值 -->
+      <div class="modal fade" id="mod-recharge">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title">确认充值</h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">账号</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" v-model="item" readonly />
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toSubmit()">确定</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 确认充值 -->
+
+      <!-- 撤销充值 -->
+      <div class="modal fade" id="mod-revoke">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title">撤销充值</h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">账号</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" v-model="item" readonly />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">取消原因</label>
+                        <div class="col-md-6">
+                           <textarea class="form-control" v-model="reason"></textarea>
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toSubmit()">确定</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 撤销充值 -->
    </div>
 </template>
 <script>
    import '../../assets/lib/datepicker'
    import '../../assets/lib/bootstrap-datepicker'
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
    export default{
       name: 'cashCny',
       data(){
          return{
             items: [],
+            item: -1,
             CTypeList: [],
-            search: {queryText: '',currencyId: 'btc',status: 1,beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
+            accountId: '',
+            reason: '',
+            search: {queryText: '',currencyId: 0,status: 1,beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
          }
       },
       mounted(){
          var vm = this;
 
-         vm.getCoinDepositList();
          vm.getCurrencyTypeList();
 
          $('.group-date').datepicker({
@@ -89,9 +159,71 @@
                }
                count ++;
             });
+            vm.getCoinDepositList();
+         });
+         $('.manage-btns').on('click',function(e){
+            e = e || window.event;
+
+            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个充值记录";
+            if('coin-recharge' == _id){
+               if(vm.IsSelected(title,info)){
+                  $('#mod-recharge').modal('show');
+               }
+            }else if('coin-revoke' == _id){
+               if(vm.IsSelected(title,info)){
+                  $('#mod-revoke').modal('show');
+               }
+            }
+         });
+
+         // 关闭重置模态框
+         $(".modal").on("hidden.bs.modal", function() {
+            vm.reason = '';
+         });
+
+         Custom.selectItem('#coin-table',vm.item,function(res){
+            vm.item = res;
+            for(var i = 0;i<vm.items;i++){
+               if(res == vm.items[i].Id){
+                  vm.accountId = vm.items[i].AccountId;
+               }
+            }
          });
       },
       methods:{
+         // 确认充值
+         toSubmit: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CoinDeposit/Confirm',{
+               data: {depositId: vm.item},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 撤销充值
+         toCancel: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CoinDeposit/Cancel',{
+               data: {depositId: vm.item,accountId: vm.accountId,reason: vm.reason},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     $('#mod-revoke').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 撤销充值
          // 获取虚拟币充值列表
          getCoinDepositList: function(){
             var vm = this;
@@ -116,12 +248,12 @@
          getCurrencyTypeList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/Currency/GetList',{
-               data: {queryText: '',pageIndex: 1,pageSize: 10},
+            Custom.ajaxFn('/Currency/VirtualList',{
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.CTypeList = res.Data.Items;
-                     vm.search.currencyId = res.Data.Items[0].Id;
+                     vm.CTypeList = res.Data;
+                     vm.search.currencyId = res.Data[0].Id;
+                     vm.getCoinDepositList();
                   }
                },
                errorCallback: function(res){
@@ -129,12 +261,11 @@
                }
             });
          },
-         // 搜索
-         toSearch: function(){
+         // 请选择一个管理员
+         IsSelected: function(title,txt){
             var vm = this;
-
-            console.log(vm.search)
-            vm.getCoinDepositList();
+            
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       },
       replace: true

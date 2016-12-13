@@ -121,7 +121,7 @@
    </div>
 </template>
 <script>
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
    export default{
       name: 'rcgList',
       data(){

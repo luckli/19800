@@ -1,12 +1,15 @@
 <template>
    <div id="content" class="content">
-      <h1 class="page-header">虚拟币提现记录列表 <small>虚拟币提现记录维护</small></h1>
+      <h1 class="page-header">虚拟待审核提现记录列表 <small>虚拟币提现记录维护</small></h1>
       <div class="row">
          <div class="col-md-12">
             <div class="panel panel-inverse">
-               <div class="panel-heading"><h4 class="panel-title">虚拟币提现记录列表</h4></div>
+               <div class="panel-heading"><h4 class="panel-title">虚拟币待审核提现记录列表</h4></div>
                <div class="panel-body">
-                  <form class="form-inline text-right">
+                  <div class="col-xs-6 col-md-6 manage-btns">
+                     <button class="btn btn-inverse" id="coin-cashLog">审核提现记录</button>
+                  </div>
+                  <form class="col-xs-6 col-md-6 form-inline text-right">
                      <div class="form-group">
                         <label for="">币种</label>
                         <select v-model="search.currencyId" class="form-control input-sm" @change="getCoinList()">
@@ -21,15 +24,11 @@
                         <span class="input-group-addon">to</span>
                         <input type="text" class="input-sm form-control date-range" v-model="search.endDate" @change="getCoinList()" readonly />
                      </div>
-                     <div class="form-group radio-status">
-                        <label v-for="state in statusList"><input type="radio" name="status" :value="state.id" v-model="search.status" @change="getCoinList()" /><span>{{state.val}}</span></label>
-                     </div>
                   </form>
                   <div class="clearfix"></div>
                   <table id="cashCoin-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
-                           <th>ID</th>
                            <th>姓名</th>
                            <th>Email</th>
                            <th>请求金额</th>
@@ -42,8 +41,7 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="item in items">
-                           <td>{{item.Id}}</td>
+                        <tr v-for="item in items" :data-id="item.Id">
                            <td>{{item.UserName}}</td>
                            <td>{{item.Email}}</td>
                            <td>{{item.Amount}}</td>
@@ -70,6 +68,32 @@
             </div>
          </div>
       </div>
+      <!-- 审核通过 -->
+      <div class="modal fade" id="cash-ok">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title">确认要通过审核吗？？</h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">审核Id</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" v-model="item" readonly />
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toAudit()">确定</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 审核通过 -->
    </div>
 </template>
 <script>
@@ -81,9 +105,9 @@
       data(){
          return {
             items: [],
+            item: -1,
             CTypeList: [],
-            statusList: [{id: 0,val:'全部'},{id: 1,val:'初始状态'},{id: 2,val:'验证失败'},{id: 3,val:'等待审核'},{id: 4,val:'处理中'},{id: 5,val:'完成'},{id: 6,val:'处理失败'},{id: 7,val:'取消'}],
-            search: {currencyId: '',status: 0,queryText: '',beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
+            search: {currencyId: '',queryText: '',beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
          }
       },
       mounted(){
@@ -106,19 +130,52 @@
             });
             vm.getCoinList();
          });
+
+         // 显示弹层
+         $('.manage-btns').on('click',function(e){
+            e = e || window.event;
+
+            var _id = $(e.target).attr('id');
+            if('coin-cashLog' == _id){
+               if(vm.IsSelected('提示','请选择需要完成提现记录')){
+                  $('#cash-ok').modal('show');
+               }
+            }
+         });
+
+         Custom.selectItem('#cashCoin-table',vm.item,function(res){
+            vm.item = res;
+         });
       },
       methods:{
+         // 审核通过
+         toAudit: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CoinWithdraw/Audit',{
+               data: {withrawId: vm.item},
+               callback: function(res){
+                  if(res.IsSuccess){
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+                  $('#cash-ok').modal('hide');
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
          // 虚拟币提现列表
          getCoinList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/CoinWithdraw/GetList',{
+            Custom.ajaxFn('/CoinWithdraw/GetPendingList',{
                data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data.Items;
                      for(var i = 0;i<list.length;i++){
-                        list[i].UpdatedAt = Custom.dateTimeFormatter(list[i].UpdatedAt);
                         list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
                      }
                      vm.items = list;
@@ -146,6 +203,12 @@
                   console.log(res);
                }
             });
+         },
+         // 请选择一个id
+         IsSelected: function(title,txt){
+            var vm = this;
+            
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       },
       replace:true

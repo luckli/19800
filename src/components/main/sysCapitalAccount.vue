@@ -12,12 +12,17 @@
                      <button class="btn btn-inverse" data-id="ca-unlock">解锁</button>
                      <button class="btn btn-inverse" data-id="ca-setDefault">设为默认充值账户</button>
                   </div>
+                  <div class="col-xs-4 col-md-4 form-inline text-right">
+                     <div class="form-group">
+                        <label for="search"></label>
+                        <input type="text" class="form-control input-sm" id="search" v-model="search.queryText" @keyup.enter="getCapAccountList()" placeholder="输入账号进行搜索..." />
+                     </div>
+                  </div>
                   <div class="clearfix"></div>
                   <table id="ca-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
                            <th>开户人</th>
-                           <th>账户类型</th>
                            <th>账号</th>
                            <th>账户银行</th>
                            <th>余额</th>
@@ -25,13 +30,15 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr>
-                           <td>栾爱新</td>
-                           <td>支付宝</td>
-                           <td>15000648745</td>
-                           <td>中国建设银行</td>
-                           <td>183,982.0000</td>
-                           <td>已锁定</td>
+                        <tr v-for="item in items" :data-id="item.Id">
+                           <td>{{item.UserName}}</td>
+                           <td>{{item.AccountNumber}}</td>
+                           <td>{{item.BankName}}</td>
+                           <td>{{item.Balance}}</td>
+                           <td><span v-if="1 == item.AccountStatus">正常</span><span v-if="2 == item.AccountStatus">锁定</span><span v-if="3 == item.AccountStatus">禁用</span></td>
+                        </tr>
+                        <tr v-if="0 == items.length">
+                           <td colspan="5" style="text-align:center;">无数据</td>
                         </tr>
                      </tbody>
                   </table>
@@ -53,6 +60,14 @@
                         <label class="col-md-4 control-label custom-label">拥有者姓名<span>*</span></label>
                         <div class="col-md-6">
                            <input type="text" class="form-control" v-model="aktObj.ownerName" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">币种<span>*</span></label>
+                        <div class="col-md-6">
+                           <select v-model="aktObj.currencyId" class="form-control">
+                              <option v-for="clist in currencyList" :value="clist.Id">{{clist.Code}}</option>
+                           </select>
                         </div>
                      </div>
                      <div class="form-group">
@@ -99,16 +114,14 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">账号</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="aktObj.accountNumber" readonly />
+                           <input type="text" class="form-control" v-model="accountNumber" readonly />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="1==sign" @click="toLock()">锁定</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="2==sign" @click="toUnlock()">解锁</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="3==sign" @click="setDefaultAccount()">确定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toAbout()">{{txt}}</a>
                </div>
             </div>
          </div>
@@ -117,46 +130,75 @@
    </div>
 </template>
 <script>
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
    export default {
       name: 'ca',
       data(){
          return {
             items: [],
             item: -1,
-            sign: 1,
-            aktObj: {userId: '',currencyId: '',ownerName: '',accountType: 0,subbranch: '',accountNumber: ''},
-            accountList: [{Id: 0,BankName: '支付宝'},{Id: 1,BankName: '财付通'},{Id: 2,BankName: '银行'}]
+            sign: -1,
+            txt: '锁定',
+            accountNumber: '',
+            aktObj: {userId: '1',currencyId: 0,ownerName: '',accountType: 0,subbranch: '',accountNumber: ''},
+            search: {queryText: '',pageIndex: 1,pageSize: 10},
+            accountList: [],
+            currencyList: []
          }
       },
       mounted(){
          var vm = this;
 
-         vm.getPayTypeList();
-
+         // 关闭重置模态框
+         $(".modal").on("hidden.bs.modal", function() {
+            if(-1 == vm.sign){
+               vm.aktObj = {userId: '1',currencyId: vm.currencyList[0].Id,ownerName: '',accountType: vm.accountList[0].Id,subbranch: '',accountNumber: ''};
+            }
+         });
          $('.manage-btns').on('click',function(e){
             e = e || window.event;
 
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个账户";
             if('ca-add' == _id){
+               vm.sign = -1;
+               if(0 == vm.accountList.length){
+                  vm.getPayTypeList();
+               }
+               if(0 == vm.currencyList.length){
+                  vm.getCurrencyTypeList();
+               }
                $('#ca-add').modal('show');
             }else if('ca-lock' == _id){
                vm.sign = 1;
+               vm.txt = '锁定';
                if(vm.IsSelected(title,info)){
                   $('#ca-key').modal('show');
                }
             }else if('ca-unlock' == _id){
                vm.sign = 2;
+               vm.txt = '解锁';
                if(vm.IsSelected(title,info)){
                   $('#ca-key').modal('show');
                }
             }else if('ca-setDefault' == _id){
                vm.sign = 3;
+               vm.txt = '确定';
                if(vm.IsSelected(title,info)){
                   $('#ca-key').modal('show');
                }
             }
          });
+
+         Custom.selectItem('#ca-table',vm.item,function(res){
+            vm.item = res;
+            for(var i = 0;i<vm.items.length;i++){
+               if(res == vm.items[i].Id){
+                  vm.accountNumber = vm.items[i].AccountNumber;
+               }
+            }
+         });
+
+         vm.getCapAccountList();
       },
       methods:{
          // 添加资金账号
@@ -167,7 +209,8 @@
                data: vm.aktObj,
                callback: function(res){
                   if(res.IsSuccess){
-                     //vm.items = res.Data.Items;
+                     $('#ca-add').modal('hide');
+                     vm.getCapAccountList();
                   }
                },
                errorCallback: function(res){
@@ -176,14 +219,22 @@
             });
          },
          // 锁定
-         toLock: function(){
-            var vm = this;
+         toAbout: function(){
+            var vm = this,url = '';
+            if(1==vm.sign){
+               url = '/CapitalAccount/Lock';
+            }else if(2==vm.sign){
+               url = '/CapitalAccount/Unlock';
+            }else if(3==vm.sign){
+               url = '/CapitalAccount/SetDefault'
+            }
 
-            Custom.ajaxFn('/CapitalAccount/Lock',{
-               data: {accountId: ''},
+            Custom.ajaxFn(url,{
+               data: {accountId: vm.accountNumber},
                callback: function(res){
                   if(res.IsSuccess){
-                     //vm.items = res.Data.Items;
+                     $('#ca-key').modal('hide');
+                     vm.getCapAccountList();
                   }
                },
                errorCallback: function(res){
@@ -191,15 +242,17 @@
                }
             });
          },
-         // 解锁
-         toUnlock: function(){
+         // 获取资金账户列表
+         getCapAccountList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/CapitalAccount/Unlock',{
-               data: {accountId: ''},
+            Custom.ajaxFn('/CapitalAccount/GetList',{
+               data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){
-                     //vm.items = res.Data.Items;
+                     vm.items = res.Data.Items;
+                  }else{
+                     vm.items = [];
                   }
                },
                errorCallback: function(res){
@@ -207,15 +260,17 @@
                }
             });
          },
-         // 设置默认账户
-         setDefaultAccount: function(){
+         // 获取币种列表
+         getCurrencyTypeList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/CapitalAccount/Unlock',{
-               data: {accountId: ''},
+            Custom.ajaxFn('/Currency/List',{
                callback: function(res){
                   if(res.IsSuccess){
-                     //vm.items = res.Data.Items;
+                     vm.currencyList = res.Data;
+                     if(0<res.Data.length){
+                        vm.aktObj.currencyId = res.Data[0].Id;
+                     }
                   }
                },
                errorCallback: function(res){
@@ -230,7 +285,10 @@
             Custom.ajaxFn('/CapitalAccount/GetPayTypeList',{
                callback: function(res){
                   if(res.IsSuccess){
-                     //vm.items = res.Data.Items;
+                     vm.accountList = res.Data;
+                     if(0<res.Data.length){
+                        vm.aktObj.accountType = res.Data[0].Id
+                     }
                   }
                },
                errorCallback: function(res){

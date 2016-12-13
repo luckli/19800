@@ -26,13 +26,14 @@ module.exports = {
       'vue$': 'vue/dist/vue',
       'src': path.resolve(__dirname, '../src'),
       'assets': path.resolve(__dirname, '../src/assets'),
-      'components': path.resolve(__dirname, '../src/components')
+      'components': path.resolve(__dirname, '../src/components'),
+      'custom': path.resolve('./src/assets/js/custom.js')
     }
-  },
+  },/*
   externals: {
     'jquery': 'jquery',
     'App': 'App'
-  },
+  },*/
   resolveLoader: {
     fallback: [path.join(__dirname, '../node_modules')]
   },

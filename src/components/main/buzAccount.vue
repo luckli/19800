@@ -15,10 +15,7 @@
                            </select>
                         </div>
                         <div class="form-group">
-                           <input type="text" class="form-control input-sm" v-model="search.email" @input="toInput()" placeholder="输入登陆账号进行搜索..." />
-                        </div>
-                        <div class="form-group">
-                           <input type="text" class="form-control input-sm" v-model="search.userId" @input="toInput()" placeholder="输入userid进行搜索..." />
+                           <input type="text" class="form-control input-sm" v-model="search.queryText" @input="toInput()" placeholder="输入登陆账号或userid进行搜索..." />
                         </div>
                      </form>
                   </div>
@@ -43,6 +40,9 @@
                            <td>{{item.TotalAmount}}</td>
                            <td>{{item.UpdatedAt}}</td>
                         </tr>
+                        <tr v-if="0 == items.length">
+                           <td colspan="6" style="text-align:center;">无数据</td>
+                        </tr>
                      </tbody>
                   </table>
                </div>
@@ -52,7 +52,7 @@
    </div>
 </template>
 <script>
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
    export default{
       name: 'account',
       data(){

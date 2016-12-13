@@ -11,8 +11,19 @@
                      <button class="btn btn-inverse" data-id="cny-clear">清理无效充值</button>
                      <button class="btn btn-inverse" data-id="cny-revoke">撤销充值确认</button>
                   </div>
+                  <div class="col-xs-4 col-md-4 form-inline text-right">
+                     <div class="form-group">
+                        <label>搜索</label>
+                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getPendingList()" placeholder="输入账号进行搜索..." />
+                     </div>
+                     <div class="form-group radio-status">
+                        <label><input type="radio" name="status" value="1" v-model="search.status" @change="getPendingList()" /><span>待确认</span></label>
+                        <label><input type="radio" name="status" value="2" v-model="search.status" @change="getPendingList()" /><span>已完成</span></label>
+                        <label><input type="radio" name="status" value="3" v-model="search.status" @change="getPendingList()" /><span>已失效</span></label>
+                     </div>
+                  </div>
                   <div class="clearfix"></div>
-                  <table id="account-table" class="table table-striped table-bordered table-box">
+                  <table id="cnyPending-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
                            <th>充值id</th>
@@ -43,12 +54,49 @@
                            </td>
                            <td>{{item.CreatedAt}}</td>
                         </tr>
+                        <tr v-if="0==items.length">
+                           <td colspan="9" style="text-align:center;">无数据</td>
+                        </tr>
                      </tbody>
                   </table>
                </div>
             </div>
          </div>
       </div>
+      <!-- 充值 -->
+      <div class="modal fade" id="ca-recharge">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title">确认充值</h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">账号</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" readonly />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">金额</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" readonly />
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="1==sign" @click="toLock()">确认</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="2==sign" @click="toUnlock()">确认</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 充值 -->
+
       <!-- 清理/撤销 -->
       <div class="modal fade" id="ca-key">
          <div class="modal-dialog">
@@ -65,12 +113,17 @@
                            <input type="text" class="form-control" readonly />
                         </div>
                      </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">备注</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" v-model="reason" />
+                        </div>
+                     </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="1==sign" @click="toLock()">确认</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="2==sign" @click="toUnlock()">确认</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toOK()">确认</a>
                </div>
             </div>
          </div>
@@ -79,15 +132,16 @@
    </div>
 </template>
 <script>
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
    export default{
-      name: 'pending',
+      name: 'cnyPending',
       data(){
          return{
             items: [],
+            item: -1,
             reason: '',
             sign: 1,
-            pageObj: {queryText: '',pageIndex: 1,pageSize: 10}
+            search: {queryText: '',status: 1,pageIndex: 1,pageSize: 10}
          }
       },
       mounted(){
@@ -106,15 +160,26 @@
          $('.manage-btns').on('click',function(e){
             e = e || window.event;
 
-            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择需要销毁的充值码";
+            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个待充值记录";
             if('cny-recharge' == _id){
-               $('#ca-add').modal('show');
-            }else if('ca-lock' == _id){
+               if(vm.IsSelected(title,info)){
+                  $('#ca-recharge').modal('show');
+               }
+            }else if('cny-clear' == _id){
                vm.sign = 1;
                if(vm.IsSelected(title,info)){
                   $('#ca-key').modal('show');
                }
+            }else if('cny-revoke' == _id){
+               vm.sign = 2;
+               if(vm.IsSelected(title,info)){
+                  $('#ca-key').modal('show');
+               }
             }
+         });
+
+         Custom.selectItem('#cnyPending-table',vm.item,function(res){
+            vm.item = res;
          });
       },
       methods:{
@@ -134,31 +199,20 @@
                }
             });
          },
-         // 清理无效充值
-         toClear: function(){
-            var vm = this;
+         // 清理无效/撤销充值
+         toOK: function(){
+            var vm = this,url='';
+            if(1 == vm.sign){
+               url = '/Deposit/Cancel';
+            }else if(2 == vm.sign){
+               url = '/Deposit/Reset';
+            }
 
-            Custom.ajaxFn('/Deposit/Cancel',{
+            Custom.ajaxFn(url,{
                data: {depositId: vm.item,reason: vm.reason},
                callback: function(res){
                   if(res.IsSuccess){
-                     
-                  }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
-         },
-         // 撤销充值确认
-         toRevoke: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Deposit/Reset',{
-               data: {depositId: vm.item,reason: vm.reason},
-               callback: function(res){
-                  if(res.IsSuccess){
-                     
+                     $('#ca-key').modal('hide');
                   }
                },
                errorCallback: function(res){
@@ -171,7 +225,7 @@
             var vm = this;
 
             Custom.ajaxFn('/Deposit/GetPendingList',{
-               data: vm.pageObj,
+               data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data.Items;
@@ -185,6 +239,12 @@
                   console.log(res);
                }
             });
+         },
+         // 请选择一个管理员
+         IsSelected: function(title,txt){
+            var vm = this;
+            
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       }
    }

@@ -16,7 +16,7 @@
             </div>
             <!-- end brand -->
             <div class="login-content">
-               <form method="POST" class="margin-bottom-0" @click.enter="login()">
+               <form method="POST" class="margin-bottom-0" @keyup.enter="login()">
                   <div class="form-group m-b-20">
                      <input type="text" class="form-control input-lg" v-model="account" name="name" placeholder="用户名" />
                   </div>
@@ -39,7 +39,7 @@
 
 </template>
 <script>
-    import Custom from '../assets/js/custom'
+    import Custom from 'custom'
     export default {
       name: 'login',
       data(){
