@@ -14,7 +14,7 @@
                   </div>
                   <div class="col-xs-4 col-md-4 form-inline text-right">
                      <div class="form-group">
-                        <label for="search"></label>
+                        <label for="search">搜索</label>
                         <input type="text" class="form-control input-sm" id="search" v-model="search.queryText" @keyup.enter="getCapAccountList()" placeholder="输入账号进行搜索..." />
                      </div>
                   </div>

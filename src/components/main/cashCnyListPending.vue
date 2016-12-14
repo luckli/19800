@@ -18,9 +18,9 @@
                         <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getCnyCashList()" placeholder="输入email或姓名进行搜索..." />
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" v-model="search.beginDate" @change="getCnyCashList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getCnyCashList()" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" v-model="search.endDate" @change="getCnyCashList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getCnyCashList()" readonly />
                      </div>
                      <div class="form-group radio-status">
                         <label><input type="radio" name="status" value="3" v-model="search.status" @change="getCnyCashList()" /><span>待处理</span></label>
@@ -42,7 +42,7 @@
                      </thead>
                      <tbody>
                         <tr v-for="item in items" :data-id="item.Id">
-                           <td>{{item.UserName}}</td>
+                           <td>ID: {{item.Id}}<br />{{item.UserName}}<br /><button class="btn btn-info btn-xs ex-reset" @click.stop="toReset(item.Id)" v-if="item.Status"><i class="fa fa-undo"></i><span> 重置</span></button></td>
                            <td>银行：{{item.BankName}}<br />账号：{{item.AccountNumber}} <br />开户人：{{item.UserName}}</td>
                            <td>{{item.Amount}}</td>
                            <td>银行：{{item.CapitalBankName}}<br />账号：{{item.CapitalAccountNumber}} <br />开户人：{{item.CapitalUserName}}</td>
@@ -224,9 +224,12 @@
          // 导出提现列表
          exportCashList: function(){
             var vm = this;
-
-            Custom.ajaxFn('//Withdraw/Export',{
+            var url = Custom.ip+'/Withdraw/Export/?status='+vm.search.status+'&accountType='+vm.accountType+'&queryText='+vm.search.queryText+
+               '&beginDate='+vm.search.beginDate+'&endDate='+vm.search.endDate;
+            window.open(url);
+            /*Custom.ajaxFn('/Withdraw/Export',{
                data: {status: vm.search.status,accountType: vm.accountType,queryText: vm.search.queryText,beginDate: vm.search.beginDate,endDate: vm.search.endDate},
+               method: 'GET',
                dataType: 'application/vnd.ms-excel',
                callback: function(res){
                   console.log(res);
@@ -235,18 +238,18 @@
                      for(var i = 0;i<list.length;i++){
                         list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
                      }*/
-                  }
+                  /*}
                },
                errorCallback: function(res){
                   console.log(res);
                }
-            });
+            });*/
          },
          // 完成提现
          toCash: function(){
             var vm = this;
 
-            Custom.ajaxFn('//Withdraw/Complete',{
+            Custom.ajaxFn('/Withdraw/Complete',{
                data: vm.cashObj,
                callback: function(res){
                   if(res.IsSuccess){
@@ -265,7 +268,7 @@
          toCancel: function(){
             var vm = this;
 
-            Custom.ajaxFn('//Withdraw/Cancel',{
+            Custom.ajaxFn('/Withdraw/RollBack',{
                data: {withrawId: vm.item,reason: vm.reason},
                callback: function(res){
                   if(res.IsSuccess){
@@ -280,11 +283,29 @@
                }
             });
          },
+         // 重置提现
+         toReset: function(id){
+            var vm = this;
+
+            Custom.ajaxFn('/Withdraw/Reset',{
+               data: {withrawId: id},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.getCnyCashList();
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
          // 待处理cny提现列表
          getCnyCashList: function(){
             var vm = this;
 
-            Custom.ajaxFn('//Withdraw/GetMyList',{
+            Custom.ajaxFn('/Withdraw/GetMyList',{
                data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){

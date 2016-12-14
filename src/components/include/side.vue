@@ -40,6 +40,9 @@
                    <li><router-link to="/main/buzAccount">账户列表</router-link></li>
                    <li><router-link to="/main/buzMarketDepth">市场深度</router-link></li>
                    <li><router-link to="/main/buzTradeVolume">成交量报表</router-link></li>
+                   <li><router-link to="/main/buzTradeList">成交记录</router-link></li>
+                   <li><router-link to="/main/buzLevel">realName等级管理</router-link></li>
+                   <li><router-link to="/main/buzApply">realName申请列表</router-link></li>
                </ul>
             </li>
             <li class="has-sub">
@@ -66,6 +69,16 @@
                    <li><router-link to="/main/cashCnyList">人民币提现列表(管)</router-link></li>
                    <li><router-link to="/main/cashCoinListPending">coin待审核提现列表</router-link></li>
                    <li><router-link to="/main/cashCoinList">coin提现列表</router-link></li>
+               </ul>
+            </li>
+            <li class="has-sub">
+               <a href="javascript:;">
+                   <b class="caret pull-right"></b>
+                   <i class="fa fa-2x fa-gift"></i>
+                   <span>消息管理</span>
+                </a>
+               <ul class="sub-menu">
+                   <li><router-link to="/main/msgTrigger">Notification触发器管理</router-link></li>
                </ul>
             </li>
             <li class="has-sub">

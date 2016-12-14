@@ -156,7 +156,7 @@
                   for(var i = 0;i<vm.items.length;i++){
                      if(vm.index == vm.items[i].Id){
                         for(var k in vm.items[i]){
-                           vm.addObj[k] = vm.items[i][k];
+                           vm.addObj[k] = JSON.parse(vm.items[i][k]);
                         }
                      }
                   }
@@ -167,7 +167,7 @@
                   for(var i = 0;i<vm.items.length;i++){
                      if(vm.index == vm.items[i].Id){
                         for(var k in vm.items[i]){
-                           vm.addObj[k] = vm.items[i][k];
+                           vm.addObj[k] = JSON.parse(vm.items[i][k]);
                         }
                      }
                   }

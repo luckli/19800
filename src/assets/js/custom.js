@@ -70,6 +70,7 @@ define(function(){
    };
 
    return {
+      ip: _ip,
       ajaxFn: function(url,opts){
          var _url = _ip + url,
             _method = opts.method || 'POST',

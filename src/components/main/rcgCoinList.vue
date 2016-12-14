@@ -18,7 +18,7 @@
                         </select>
                      </div>
                      <div class="form-group">
-                        <input type="text" class="form-control input-sm" v-model="search.queryText" @input="getCoinDepositList()" placeholder="输入email进行搜索..." />
+                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getCoinDepositList()" placeholder="输入email进行搜索..." />
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
                         <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getCoinDepositList()" readonly />
@@ -26,9 +26,9 @@
                         <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getCoinDepositList()" readonly />
                      </div>
                      <div class="form-group radio-status">
-                        <label><input type="radio" name="status" value="1" v-model="search.status" @change="getPendingList()" /><span>待确认</span></label>
-                        <label><input type="radio" name="status" value="2" v-model="search.status" @change="getPendingList()" /><span>已完成</span></label>
-                        <label><input type="radio" name="status" value="3" v-model="search.status" @change="getPendingList()" /><span>已失效</span></label>
+                        <label><input type="radio" name="status" value="1" v-model="search.status" @change="getCoinDepositList()" /><span>待确认</span></label>
+                        <label><input type="radio" name="status" value="2" v-model="search.status" @change="getCoinDepositList()" /><span>已完成</span></label>
+                        <label><input type="radio" name="status" value="3" v-model="search.status" @change="getCoinDepositList()" /><span>已失效</span></label>
                      </div>
                   </form>
                   <div class="clearfix"></div>
@@ -58,19 +58,22 @@
                            <td>{{item.CoinDepositStatus}}</td>
                            <td>{{item.CreatedAt}}</td>
                         </tr>
+                        <tr v-if="0 == items.length">
+                           <td colspan="9" style="text-align:center;">无数据</td>
+                        </tr>
                      </tbody>
                   </table>
                </div>
             </div>
          </div>
       </div>
-      <!-- 确认充值 -->
-      <div class="modal fade" id="mod-recharge">
+      <!-- 确认/撤销充值 -->
+      <div class="modal fade" id="mod-rcg">
          <div class="modal-dialog">
             <div class="modal-content">
                <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title">确认充值</h4>
+                  <h4 class="modal-title"><span v-if="1==sign">确认充值</span><span v-if="2==sign">撤销充值</span></h4>
                </div>
                <div class="modal-body">
                   <form class="form-horizontal">
@@ -80,34 +83,7 @@
                            <input type="text" class="form-control" v-model="item" readonly />
                         </div>
                      </div>
-                  </form>
-               </div>
-               <div class="modal-footer">
-                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toSubmit()">确定</a>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!-- 确认充值 -->
-
-      <!-- 撤销充值 -->
-      <div class="modal fade" id="mod-revoke">
-         <div class="modal-dialog">
-            <div class="modal-content">
-               <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title">撤销充值</h4>
-               </div>
-               <div class="modal-body">
-                  <form class="form-horizontal">
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">账号</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="item" readonly />
-                        </div>
-                     </div>
-                     <div class="form-group">
+                     <div class="form-group" v-if="2==sign">
                         <label class="col-md-4 control-label custom-label">取消原因</label>
                         <div class="col-md-6">
                            <textarea class="form-control" v-model="reason"></textarea>
@@ -117,12 +93,13 @@
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toSubmit()">确定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-if="1==sign" @click="toSubmit()">确定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" v-if="2==sign" @click="toCancel()">确定</a>
                </div>
             </div>
          </div>
       </div>
-      <!-- 撤销充值 -->
+      <!-- 确认/撤销充值 -->
    </div>
 </template>
 <script>
@@ -135,8 +112,8 @@
          return{
             items: [],
             item: -1,
+            sign: 1,
             CTypeList: [],
-            accountId: '',
             reason: '',
             search: {queryText: '',currencyId: 0,status: 1,beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
          }
@@ -167,11 +144,13 @@
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个充值记录";
             if('coin-recharge' == _id){
                if(vm.IsSelected(title,info)){
-                  $('#mod-recharge').modal('show');
+                  vm.sign = 1;
+                  $('#mod-rcg').modal('show');
                }
             }else if('coin-revoke' == _id){
                if(vm.IsSelected(title,info)){
-                  $('#mod-revoke').modal('show');
+                  vm.sign = 2;
+                  $('#mod-rcg').modal('show');
                }
             }
          });
@@ -183,11 +162,6 @@
 
          Custom.selectItem('#coin-table',vm.item,function(res){
             vm.item = res;
-            for(var i = 0;i<vm.items;i++){
-               if(res == vm.items[i].Id){
-                  vm.accountId = vm.items[i].AccountId;
-               }
-            }
          });
       },
       methods:{
@@ -199,7 +173,7 @@
                data: {depositId: vm.item},
                callback: function(res){
                   if(res.IsSuccess){
-                     
+                     $('#mod-rcg').modal('hide');
                   }
                },
                errorCallback: function(res){
@@ -212,10 +186,10 @@
             var vm = this;
 
             Custom.ajaxFn('/CoinDeposit/Cancel',{
-               data: {depositId: vm.item,accountId: vm.accountId,reason: vm.reason},
+               data: {depositId: vm.item,reason: vm.reason},
                callback: function(res){
                   if(res.IsSuccess){
-                     $('#mod-revoke').modal('hide');
+                     $('#mod-rcg').modal('hide');
                   }
                },
                errorCallback: function(res){
@@ -223,7 +197,6 @@
                }
             });
          },
-         // 撤销充值
          // 获取虚拟币充值列表
          getCoinDepositList: function(){
             var vm = this;
@@ -232,11 +205,7 @@
                data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){
-                     var list = res.Data.Items;
-                     for(var i = 0;i<list.length;i++){
-                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
-                     }
-                     vm.items = list;
+                     vm.items = res.Data.Items;
                   }
                },
                errorCallback: function(res){

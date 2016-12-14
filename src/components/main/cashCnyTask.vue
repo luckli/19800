@@ -11,7 +11,8 @@
                   </div>
                   <div class="col-xs-8 col-md-8 form-inline text-right">
                      <div class="form-group">
-                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getCnyCashList()" placeholder="输入email进行搜索..." />
+                        <label for="">搜索</label>
+                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getCashTaskList()" placeholder="输入email进行搜索..." />
                      </div>
                   </div>
                   <div class="clearfix"></div>
@@ -40,7 +41,32 @@
             </div>
          </div>
       </div>
-
+      <!-- 领取任务 -->
+      <div class="modal fade" id="mod-getCash">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title">领取任务</h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">提现ID</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" v-model="item" readonly />
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="getTask()">确定</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 领取任务 -->
    </div>
 </template>
 <script>
@@ -57,14 +83,15 @@
       mounted(){
          var vm = this;
 
+         vm.getCashTaskList();
          // 显示弹层
-         $('.manage-getCash').on('click',function(e){
+         $('.manage-btns').on('click',function(e){
             e = e || window.event;
 
-            var _id = $(e.target).attr('id');
-            if('coin-cashLog' == _id){
-               if(vm.IsSelected('提示','请选择需要完成提现记录')){
-                  $('#cash-ok').modal('show');
+            var _id = $(e.target).attr('id'),title = '提示',info="请选择需要完成提现记录";
+            if('coin-getCash' == _id){
+               if(vm.IsSelected(title,info)){
+                  $('#mod-getCash').modal('show');
                }
             }
          });
@@ -73,9 +100,48 @@
          });
       },
       methods:{
+         // 领取任务
+         getTask: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/Withdraw/Assign',{
+               data: {withrawId: vm.item},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.getCashTaskList();
+                     $('#mod-getCash').modal('hide');
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
          // 获取人民币提取任务列表
          getCashTaskList: function(){
             var vm = this;
+
+            Custom.ajaxFn('/Withdraw/GetAssignList',{
+               data: vm.search,
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                     }
+                     vm.items = list;
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 请选择一个管理员
+         IsSelected: function(title,txt){
+            var vm = this;
+            
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       },
       replace: true

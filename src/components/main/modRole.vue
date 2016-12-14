@@ -110,7 +110,7 @@
                   for(var i = 0;i<vm.roles.length;i++){
                      if(vm.index == vm.roles[i].Id){
                         for(var k in vm.roles[i]){
-                           vm.roleObj[k] = vm.roles[i][k];
+                           vm.roleObj[k] = JSON.parse(vm.roles[i][k]);
                         }
                      }
                   }

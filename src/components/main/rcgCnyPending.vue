@@ -38,7 +38,7 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="item in items">
+                        <tr v-for="item in items" :data-id="item.Id">
                            <td>{{item.Id}}</td>
                            <td>{{item.UserName}}</td>
                            <td>{{item.Email}}</td>
@@ -76,21 +76,22 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">账号</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" readonly />
+                           <input type="text" class="form-control" v-model="item" readonly />
                         </div>
                      </div>
                      <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">金额</label>
+                        <label class="col-md-4 control-label custom-label">资金来源</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" readonly />
+                           <select v-model="fundSourceId" class="form-control">
+                              <option v-for="bank in banks" :value="bank.Id">{{bank.AccountNumber}}</option>
+                           </select>
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="1==sign" @click="toLock()">确认</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="2==sign" @click="toUnlock()">确认</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toRecharge()">确认</a>
                </div>
             </div>
          </div>
@@ -110,7 +111,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">账号</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" readonly />
+                           <input type="text" class="form-control" v-model="item" readonly />
                         </div>
                      </div>
                      <div class="form-group">
@@ -138,7 +139,9 @@
       data(){
          return{
             items: [],
+            banks: [],
             item: -1,
+            fundSourceId: -1,
             reason: '',
             sign: 1,
             search: {queryText: '',status: 1,pageIndex: 1,pageSize: 10}
@@ -151,7 +154,7 @@
 
          // 关闭重置模态框
          $(".modal").on("hidden.bs.modal", function() {
-            if('ca-key' == $(this).attr('id')){
+            if(2==vm.sign){
                vm.reason = '';
             }
          });
@@ -163,6 +166,9 @@
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个待充值记录";
             if('cny-recharge' == _id){
                if(vm.IsSelected(title,info)){
+                  if(0==vm.banks.length){
+                     vm.getCapitalAccount();
+                  }
                   $('#ca-recharge').modal('show');
                }
             }else if('cny-clear' == _id){
@@ -180,6 +186,12 @@
 
          Custom.selectItem('#cnyPending-table',vm.item,function(res){
             vm.item = res;
+
+            for(var i = 0;i<vm.items.length;i++){
+               if(res == vm.items[i].Id){
+
+               }
+            }
          });
       },
       methods:{
@@ -188,10 +200,11 @@
             var vm = this;
 
             Custom.ajaxFn('/Deposit/Confirm',{
-               data: {depositId: vm.item,fundSourceId: ''},
+               data: {depositId: vm.item,fundSourceId: vm.fundSourceId},
                callback: function(res){
                   if(res.IsSuccess){
-                     
+                     vm.getPendingList();
+                     $('#ca-recharge').modal('show');
                   }
                },
                errorCallback: function(res){
@@ -212,6 +225,7 @@
                data: {depositId: vm.item,reason: vm.reason},
                callback: function(res){
                   if(res.IsSuccess){
+                     vm.getPendingList();
                      $('#ca-key').modal('hide');
                   }
                },
@@ -233,10 +247,29 @@
                         list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
                      }
                      vm.items = list;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: '获取列表失败，'+res.errorMsg,index: vm.item});
                   }
                },
                errorCallback: function(res){
                   console.log(res);
+               }
+            });
+         },
+         // 获取资金账号列表
+         getCapitalAccount: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CapitalAccount/List',{
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.banks = res.Data;
+                     vm.fundSourceId = vm.banks[0].Id;
+                  }
+               },
+               errorCallback: function(res){
+                  vm.banks = [];
+                  Custom.isSelected({title: '提示',txt: '查看失败，'+res.statusText,index: -1});
                }
             });
          },
