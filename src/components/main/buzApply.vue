@@ -90,7 +90,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">认证类别</label>
                         <div class="col-md-6">
-                           <select class="form-control input-sm">
+                           <select class="form-control input-sm" v-model="obj.type">
                               <option v-for="type in types" :value="type.id">{{type.val}}</option>
                            </select>
                         </div>
@@ -98,13 +98,13 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">备注</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" />
+                           <input type="text" class="form-control" v-model="obj.remark" />
                         </div>
                      </div>
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">是否通过</label>
                         <div class="col-md-6">
-                           <input type="checkbox" />
+                           <input type="checkbox" v-model="obj.result" />
                         </div>
                      </div>
                   </form>
@@ -127,18 +127,59 @@
                   <h4 class="modal-title">认证详细信息</h4>
                </div>
                <div class="modal-body">
-                  <form class="form-horizontal">
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">认证类别</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" readonly />
-                        </div>
-                     </div>
-                  </form>
+                  <table class="table table-striped table-bordered detail-box">
+                     <tbody>
+                        <tr>
+                           <td>认证类别</td>
+                           <td>
+                              <span v-if="1==detailObj.Type">身份证</span>
+                              <span v-if="2==detailObj.Type">护照</span>
+                              <span v-if="3==detailObj.Type">台湾通行证</span>
+                              <span v-if="4==detailObj.Type">港澳通行证</span>
+                              <span v-if="5==detailObj.Type">企业证件</span>
+                              <span v-if="6==detailObj.Type">特别认证</span>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td>图片</td>
+                           <td>
+                              <img v-for="img in detailObj.Images" :src="img" alt="图片" /></td>
+                        </tr>
+                        <tr>
+                           <td>认证数据</td>
+                           <td>{{detailObj.Data}}</td>
+                        </tr>
+                        <tr>
+                           <td>状态</td>
+                           <td>
+                              <span v-if="0==detailObj.Status">无状态</span>
+                              <span v-if="1==detailObj.Status">待审核</span>
+                              <span v-if="2==detailObj.Status">审核通过</span>
+                              <span v-if="3==detailObj.Status">审核未通过</span>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td>审核人Id</td>
+                           <td>{{detailObj.ManagerId}}</td>
+                        </tr>
+                        <tr>
+                           <td>审核时间</td>
+                           <td>{{detailObj.AuditTime}}</td>
+                        </tr>
+                        <tr>
+                           <td>审核备注</td>
+                           <td>{{detailObj.AuditRemark}}</td>
+                        </tr>
+                        <tr>
+                           <td>申请时间</td>
+                           <td>{{detailObj.CreateTime}}</td>
+                        </tr>
+                     </tbody>
+                  </table>
                </div>
                <div class="modal-footer">
-                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="getDetail()">确定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-primary" @click="toAudit()" >审核通过</a>
+                  <a href="javascript:;" class="btn btn-sm btn-warning" @click="toAudit()">审核未通过</a>
                </div>
             </div>
          </div>
@@ -156,6 +197,8 @@
             types: [{id: 1,val: '身份证'},{id: 2,val: '护照'},{id: 3,val: '台湾通行证'},{id: 4,val: '港澳通行证'},{id: 5,val: '企业证件'},{id: 6,val: '特别认证'}],
             status: [{id: 0,val: '无状态'},{id: 1,val: '待审核'},{id: 2,val: '审核通过'},{id: 3,val: '审核未通过'}],
             item: -1,
+            obj:{type: 1,result: false,remark: ''},
+            detailObj: {Type: '',Images: [],Data: '',Status: '',ManagerId: '',AuditTime: '',AuditRemark: '',CreateTime: ''},
             search: {userId: '',managerId: '',type: 1,status: 0,page: 1,pageSize: 10}
          }
       },
@@ -173,19 +216,31 @@
                   $('#mod-audit').modal('show');
                }
             }else if('buz-detail' == _id){
-               if(vm.IsSelected(title,info)){
+               //if(vm.IsSelected(title,info)){
+                  vm.getDetail();
                   $('#mod-detail').modal('show');
-               }
+               //}
             }
+         });
+
+         // 关闭重置模态框
+         $(".modal").on("hidden.bs.modal", function() {
+            if('mod-audit' == $(this).attr('id')){
+               vm.obj = {type: 1,result: false,remark: ''};
+            }
+         });
+
+         Custom.selectItem('#vApply-table',vm.item,function(res){
+            vm.item = res;
          });
       },
       methods:{
          // 审核
          toAudit: function(){
             var vm = this;
-
+            vm.obj.userId = vm.item;
             Custom.ajaxFn('/Certification/Audit',{
-               data: {userId: vm.item,type: vm.search.type,result: false,remark: ''},
+               data: vm.obj,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.getPageList();
@@ -202,16 +257,15 @@
          // 获取认证详细信息
          getDetail: function(){
             var vm = this;
-
+            vm.detailObj = {Type: '2',Images: ['./src/assets/img/user-1.jpg','./src/assets/img/user-2.jpg'],Data: '',Status: '2',ManagerId: '124',AuditTime: '2016-12-12',AuditRemark: 'remark',CreateTime: '2016-12-10'},
             Custom.ajaxFn('/Certification/Detail',{
                data: {userId: vm.item,type: vm.search.type},
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.getPageList();
+                     //vm.getPageList();
                   }else{
                      Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
                   }
-                  $('#mod-audit').modal('hide');
                },
                errorCallback: function(res){
                   console.log(res);
@@ -245,3 +299,14 @@
       replace: true
    }
 </script>
+<style lang="less">
+   .detail-box{
+      >tbody{
+         >tr{
+            >td{
+               &:first-child{ width: 14%;}
+            }
+         }
+      }
+   }
+</style>

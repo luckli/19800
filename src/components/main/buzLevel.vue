@@ -66,7 +66,7 @@
                         </div>
                      </div>
                      <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">日限额<span>*</span></label>
+                        <label class="col-md-4 control-label custom-label">月限额<span>*</span></label>
                         <div class="col-md-6">
                            <input type="number" class="form-control" v-model="obj.MonthAount" />
                         </div>
