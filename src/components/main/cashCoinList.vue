@@ -10,7 +10,7 @@
                      <div class="form-group">
                         <label for="">币种</label>
                         <select v-model="search.currencyId" class="form-control input-sm" @change="getCoinList()">
-                           <option v-for="type in CTypeList" :value="type.Id">{{type.Code}}</option>
+                           <option v-for="type in CTypeList" :value="type.Code">{{type.Code}}</option>
                         </select>
                      </div>
                      <div class="form-group">
@@ -137,7 +137,7 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.CTypeList = res.Data;
-                     vm.search.currencyId = res.Data[0].Id;
+                     vm.search.currencyId = res.Data[0].Code;
 
                      vm.getCoinList();
                   }

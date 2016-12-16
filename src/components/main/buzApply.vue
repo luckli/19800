@@ -7,7 +7,6 @@
                <div class="panel-heading"><h4 class="panel-title">实名认证申请列表</h4></div>
                <div class="panel-body">
                   <div class="col-xs-4 col-md-4 manage-btns">
-                     <button class="btn btn-inverse" data-id="buz-audit">审核</button>
                      <button class="btn btn-inverse" data-id="buz-detail">详细信息</button>
                   </div>
                   <div class="col-xs-8 col-md-8 form-inline text-right">
@@ -71,53 +70,6 @@
             </div>
          </div>
       </div>
-      <!-- 审核 -->
-      <div class="modal fade" id="mod-audit">
-         <div class="modal-dialog">
-            <div class="modal-content">
-               <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title">审核</h4>
-               </div>
-               <div class="modal-body">
-                  <form class="form-horizontal">
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">用户Id</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="item" readonly />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">认证类别</label>
-                        <div class="col-md-6">
-                           <select class="form-control input-sm" v-model="obj.type">
-                              <option v-for="type in types" :value="type.id">{{type.val}}</option>
-                           </select>
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">备注</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="obj.remark" />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">是否通过</label>
-                        <div class="col-md-6">
-                           <input type="checkbox" v-model="obj.result" />
-                        </div>
-                     </div>
-                  </form>
-               </div>
-               <div class="modal-footer">
-                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toAudit()">确定</a>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!-- 审核 -->
-
       <!-- 详细信息 -->
       <div class="modal fade" id="mod-detail">
          <div class="modal-dialog">
@@ -178,13 +130,59 @@
                   </table>
                </div>
                <div class="modal-footer">
-                  <a href="javascript:;" class="btn btn-sm btn-primary" @click="toAudit()" >审核通过</a>
-                  <a href="javascript:;" class="btn btn-sm btn-warning" @click="toAudit()">审核未通过</a>
+                  <button class="btn btn-sm btn-inverse" @click="toModal()" >去审核</button>
                </div>
             </div>
          </div>
       </div>
       <!-- 详细信息 -->
+
+      <!-- 审核 -->
+      <div class="modal fade" id="mod-audit">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title">审核</h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">用户Id</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" v-model="item" readonly />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">认证类别</label>
+                        <div class="col-md-6">
+                           <select class="form-control input-sm" v-model="obj.type">
+                              <option v-for="type in types" :value="type.id">{{type.val}}</option>
+                           </select>
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">备注</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" v-model="obj.remark" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">是否通过</label>
+                        <div class="col-md-6">
+                           <input type="checkbox" v-model="obj.result" />
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toAudit()">确定</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 审核 -->
    </div>
 </template>
 <script>
@@ -211,11 +209,7 @@
             e = e || window.event;
 
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个申请记录";
-            if('buz-audit' == _id){
-               if(vm.IsSelected(title,info)){
-                  $('#mod-audit').modal('show');
-               }
-            }else if('buz-detail' == _id){
+            if('buz-detail' == _id){
                //if(vm.IsSelected(title,info)){
                   vm.getDetail();
                   $('#mod-detail').modal('show');
@@ -247,12 +241,16 @@
                   }else{
                      Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
                   }
+                  $('#mod-detail').modal('hide');
                   $('#mod-audit').modal('hide');
                },
                errorCallback: function(res){
                   console.log(res);
                }
             });
+         },
+         toModal: function(){
+            $('#mod-audit').modal('show');
          },
          // 获取认证详细信息
          getDetail: function(){

@@ -42,6 +42,7 @@
                    <li><router-link to="/main/buzTradeVolume">成交量报表</router-link></li>
                    <li><router-link to="/main/buzTradeList">成交记录</router-link></li>
                    <li><router-link to="/main/buzExtraBudget">额外收支查询</router-link></li>
+                   <li><router-link to="/main/buzSbDividends">赛波分红</router-link></li>
                    <li><router-link to="/main/buzLevel">realName等级管理</router-link></li>
                    <li><router-link to="/main/buzApply">realName申请列表</router-link></li>
                </ul>

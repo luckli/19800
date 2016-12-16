@@ -10,7 +10,7 @@
                      <div class="form-group">
                         <label for="">币种</label>
                         <select v-model="search.currencyId" class="form-control input-sm" @change="getTransferList()">
-                           <option v-for="type in CTypeList" :value="type.Id">{{type.Code}}</option>
+                           <option v-for="type in CTypeList" :value="type.Code">{{type.Code}}</option>
                         </select>
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
@@ -74,8 +74,134 @@
          var vm = this;
 
          vm.getCurrencyTypeList();
+
+         $('.group-date').datepicker({
+            autoclose: true,
+            format: 'yyyy-mm-dd'
+         }).on('changeDate',function(ev){
+            var count = 0;
+            $('.group-date input').each(function(){
+               if(count == 0){
+                  vm.search.beginDate = $(this).val();
+               }else if(count == 1){
+                  vm.search.endDate = $(this).val();
+               }
+               count ++;
+            });
+            vm.getTransferList();
+         });
       },
       methods:{
+         // 转入冷钱包
+         toCoolWallet: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/Currency/TransferTo',{
+               data: {code: '',coldAddress: '',volume: '',txNo: '',remark: ''},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                     }
+                     vm.items = list;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 从冷钱包转入到热钱包
+         toHotWallet: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/Currency/AcceptTransferFrom',{
+               data: {code: '',coldAddress: '',hotAddress: '',volume: '',txNo: '',remark: ''},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                     }
+                     vm.items = list;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 资金账户转出
+         accountTransferTo: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CapitalAccount/TransferTo',{
+               data: {capitalAccountId: '',toOwnerName: '',toAccountType: '',toSubbranch: '',toAccountNumber: '',amount: '',txNo: '',txFee: '',remark: ''},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                     }
+                     vm.items = list;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 资金账户转入
+         accountTransferFrom: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CapitalAccount/AcceptTransferFrom',{
+               data: {capitalAccountId: '',fromOwnerName: '',fromAccountType: '',fromSubbranch: '',fromAccountNumber: '',amount: '',txNo: '',txFee: '',remark: ''},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                     }
+                     vm.items = list;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 资金账户的转账列表
+         getAccountTransferList: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CapitalAccount/GetTransferList',{
+               data: {capitalAccountId: '',beginDate: '',endDate: '',pageIndex: '',pageSize: ''},
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                     }
+                     vm.items = list;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
          // 币种的冷热钱包的转账记录列表
          getTransferList: function(){
             var vm = this;
@@ -106,7 +232,7 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.CTypeList = res.Data;
-                     vm.search.currencyId = res.Data[0].Id;
+                     vm.search.currencyId = res.Data[0].Code;
                      vm.getTransferList();
                   }
                },

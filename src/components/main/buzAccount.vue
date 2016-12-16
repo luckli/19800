@@ -10,12 +10,12 @@
                      <form class="form-inline text-right">
                         <div class="form-group">
                            <label for="">币种</label>
-                           <select v-model="currId" class="form-control input-sm" @change="toChange()">
+                           <select v-model="search.currencyId" class="form-control input-sm" @change="getAccountBalanceList()">
                               <option v-for="type in CTypeList" :value="type.id">{{type.val}}</option>
                            </select>
                         </div>
                         <div class="form-group">
-                           <input type="text" class="form-control input-sm" v-model="search.queryText" @input="toInput()" placeholder="输入登陆账号或userid进行搜索..." />
+                           <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getAccountBalanceList()" placeholder="输入用户Id进行搜索..." />
                         </div>
                      </form>
                   </div>
@@ -57,16 +57,15 @@
       name: 'account',
       data(){
          return{
-            currId: -1,
             search: {queryText: '',currencyId: '',pageIndex: 1,pageSize: 10},
-            CTypeList: [{id: -1,val:'请选择'},{id: 1,val:'cny'},{id: 2,val:'btc'},{id: 3,val:'ltc'},{id: 4,val:'ctc'}],
+            CTypeList: [],
             items: []
          }
       },
       mounted(){
          var vm = this;
 
-         vm.getAccountBalanceList();
+         vm.getCurrencyTypeList();
       },
       methods: {
          // 获取账号余额列表
@@ -77,6 +76,7 @@
                data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){
+                     vm.items = res.Data.Items;
                      //items[i].UpdatedAt = Custom.dateTimeFormatter(items[i].UpdatedAt);
                   }
                },
@@ -85,17 +85,22 @@
                }
             });
          },
-         toChange: function(){
+         // 获取币种列表
+         getCurrencyTypeList: function(){
             var vm = this;
 
-            vm.search.currencyId = vm.currId;
-            if(-1 == vm.currId){return false;}
-            vm.getAccountBalanceList();
-         },
-         toInput: function(){
-            var vm = this;
-
-            vm.getAccountBalanceList();
+            Custom.ajaxFn('/Currency/VirtualList',{
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.CTypeList = res.Data;
+                     vm.search.currencyId = res.Data[0].Code;
+                     vm.getAccountBalanceList();
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
          }
       },
       replace: true

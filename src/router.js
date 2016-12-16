@@ -16,6 +16,7 @@ function configRouter(){
          { path: 'buzTradeVolume', component: require('./components/main/buzTradeVolume') },
          { path: 'buzTradeList', component: require('./components/main/buzTradeList') },
          { path: 'buzExtraBudget', component: require('./components/main/buzExtraBudget') },
+         { path: 'buzSbDividends', component: require('./components/main/buzSbDividends') },
          { path: 'buzLevel', component: require('./components/main/buzLevel') },
          { path: 'buzApply', component: require('./components/main/buzApply') },
          { path: 'cashCnyTask', component: require('./components/main/cashCnyTask') },
