@@ -92,6 +92,7 @@
                <ul class="sub-menu">
                    <li><router-link to="/main/sysCurrency">币种列表</router-link></li>
                    <li><router-link to="/main/sysCapitalAccount">资金账户列表</router-link></li>
+                   <li><router-link to="/main/sysVipSetting">Vip设置</router-link></li>
                </ul>
             </li>
               <!-- begin sidebar minify button -->

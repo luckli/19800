@@ -30,9 +30,10 @@ function configRouter(){
          { path: 'msgModule/:Id',name: 'msgModule', component: require('./components/main/msgModule') },
          { path: 'msgTrigger', component: require('./components/main/msgTrigger') },
          { path: 'sysCurrency', component: require('./components/main/sysCurrency') },
+         { path: 'sysVipSetting', component: require('./components/main/sysVipSetting') },
          { path: 'sysCapitalAccount', component: require('./components/main/sysCapitalAccount') },
       ]},
-      {path: '*', redirect: '/login'}
+      {path: '*', redirect: 'login'}
    ];
    return route;
 }
