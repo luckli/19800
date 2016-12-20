@@ -37,6 +37,7 @@
                    <span>运营管理</span>
                 </a>
                <ul class="sub-menu">
+                   <li><router-link to="/main/buzDailyLedger">日账本列表</router-link></li>
                    <li><router-link to="/main/buzAccount">账户列表</router-link></li>
                    <li><router-link to="/main/buzMarketDepth">市场深度</router-link></li>
                    <li><router-link to="/main/buzTradeVolume">成交量报表</router-link></li>
@@ -45,6 +46,8 @@
                    <li><router-link to="/main/buzSbDividends">赛波分红</router-link></li>
                    <li><router-link to="/main/buzLevel">realName等级管理</router-link></li>
                    <li><router-link to="/main/buzApply">realName申请列表</router-link></li>
+                   <li><router-link to="/main/buzMsgSendList">短信发送列表</router-link></li>
+                   <li><router-link to="/main/buzEmailSendList">邮件发送列表</router-link></li>
                </ul>
             </li>
             <li class="has-sub">

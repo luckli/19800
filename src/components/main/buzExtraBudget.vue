@@ -6,17 +6,28 @@
             <div class="panel panel-inverse">
                <div class="panel-heading"><h4 class="panel-title">额外收支查询</h4></div>
                <div class="panel-body">
-                  <div class="col-xs-8 col-md-8 manage-btns">
+                  <div class="manage-btns">
                      <button class="btn btn-inverse" data-id="buz-coolWallet">冷钱包</button>
                      <button class="btn btn-inverse" data-id="buz-hotWallet">热钱包</button>
                      <button class="btn btn-inverse" data-id="buz-transferTo">账号转入</button>
                      <button class="btn btn-inverse" data-id="buz-transFrom">账户转出</button>
                   </div>
-                  <div class="col-xs-4 col-md-4 form-inline text-right">
-                     <div class="form-group">
+                  <div class="clearfix"></div>
+                  <ul class="tabs table-box col-xs-8 col-md-8" @click="tabFn($event)">
+                    <li :class="{'active': 1==tab}">资金账号的转账记录</li>
+                    <li :class="{'active': 2==tab}">热冷钱包的转账记录</li>
+                  </ul>
+                  <div class="col-xs-4 col-md-4 search form-inline text-right">
+                     <div class="form-group" v-show="1==tab">
                         <label for="">币种</label>
                         <select v-model="search.currencyId" class="form-control input-sm" @change="getTransferList()">
                            <option v-for="type in CTypeList" :value="type.Code">{{type.Code}}</option>
+                        </select>
+                     </div>
+                     <div class="form-group" v-show="2==tab">
+                        <label for="">资金账户</label>
+                        <select class="form-control input-sm" v-model="search.capitalAccountId">
+                           <option v-for="bank in banks" :value="bank.Id">{{bank.AccountNumber}}</option>
                         </select>
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
@@ -26,7 +37,7 @@
                      </div>
                   </div>
                   <div class="clearfix"></div>
-                  <table id="budget-table" class="table table-striped table-bordered table-box">
+                  <table id="budget-table" class="table table-striped table-bordered" v-show="2==tab">
                      <thead>
                         <tr>
                            <th>币种</th>
@@ -52,6 +63,45 @@
                         </tr>
                         <tr v-if="0 == items.length">
                            <td colspan="8" style="text-align: center;">无数据</td>
+                        </tr>
+                     </tbody>
+                  </table>
+                  <table id="budget-table" class="table table-striped table-bordered" v-show="1==tab">
+                     <thead>
+                        <tr>
+                           <th>转账方向</th>
+                           <th>银行名称</th>
+                           <th>账号户名</th>
+                           <th>账号支行</th>
+                           <th>账号号码</th>
+                           <th>other银行</th>
+                           <th>other户名</th>
+                           <th>other支行</th>
+                           <th>other号码</th>
+                           <th>转账金额</th>
+                           <th>转账流水号</th>
+                           <th>备注</th>
+                           <th>转账日期</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr v-for="item in items" :data-id="item.Id">
+                           <td><span v-if="1==item.TxType">转入</span><span v-if="2==item.TxType">转出</span></td>
+                           <td>{{item.BankName}}</td>
+                           <td>{{item.OwnerName}}</td>
+                           <td>{{item.Subbranch}}</td>
+                           <td>{{item.AccountNumber}}</td>
+                           <td>{{item.TxBankName}}</td>
+                           <td>{{item.TxOwnerName}}</td>
+                           <td>{{item.TxSubbranch}}</td>
+                           <td>{{item.TxAccountNumber}}</td>
+                           <td>{{item.Amount}}</td>
+                           <td>{{item.TxNo}}</td>
+                           <td>{{item.Remark}}</td>
+                           <td>{{item.CreatedAt}}</td>
+                        </tr>
+                        <tr v-if="0 == items.length">
+                           <td colspan="13" style="text-align: center;">无数据</td>
                         </tr>
                      </tbody>
                   </table>
@@ -213,7 +263,7 @@
             tab: 1,
             accObj: {capitalAccountId: '',ownerName: '',accountType: '',subbranch: '',accountNumber: '',amount: '',txNo: '',txFee: '',remark: ''},
             obj: {code: '',coldAddress: '',hotAddress: '',volume: '',txNo: '',remark: ''},
-            search: {currencyId: 1,beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
+            search: {currencyId: 1,capitalAccountId: 1,beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
          }
       },
       mounted(){
@@ -256,6 +306,9 @@
                   if(0==vm.accountList.length){
                      vm.getPayTypeList();
                   }
+                  if(0==vm.banks.length){
+                     vm.getCapitalAccount();
+                  }
                   vm.sign = 3;
                   $('#mod-transfer').modal('show');
                //}
@@ -263,6 +316,9 @@
                //if(vm.IsSelected(title,info)){
                   if(0==vm.accountList.length){
                      vm.getPayTypeList();
+                  }
+                  if(0==vm.banks.length){
+                     vm.getCapitalAccount();
                   }
                   vm.sign = 4;
                   $('#mod-transfer').modal('show');
@@ -419,6 +475,35 @@
                }
             });
          },
+         // 获取资金账号列表
+         getCapitalAccount: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/CapitalAccount/List',{
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.banks = res.Data;
+                     vm.accObj.capitalAccountId = vm.banks[0].Id;
+                     vm.search.capitalAccountId = vm.banks[0].Id;
+                  }
+               },
+               errorCallback: function(res){
+                  vm.banks = [];
+                  Custom.isSelected({title: '提示',txt: '查看失败，'+res.statusText,index: -1});
+               }
+            });
+         },
+         // tab切换
+         tabFn: function(e){
+            e = e || window.event;
+            var vm = this,$li = $('.tabs>li');
+
+            if($li.get(0) == e.target){
+               vm.tab = 1;
+            }else if($li.get(1) == e.target){
+               vm.tab = 2;
+            }
+         },
          // 请选择一个管理员
          IsSelected: function(title,txt){
             var vm = this;
@@ -429,3 +514,11 @@
       replace: true
    }
 </script>
+<style lang="less">
+   .tabs{padding-left: 0;
+      &:after{content: ''; display: table; clear: both;}
+      >li{ border: 1px solid transparent; border-bottom: 0; border-top-left-radius: 5px; border-top-right-radius: 5px; color:#337ab7; cursor: pointer; float: left; padding: 10px 15px;
+         &.active{ border-color:#ddd; color: #000; cursor: default;}
+      }
+   }
+</style>

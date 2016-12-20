@@ -10,7 +10,7 @@
                      <div class="form-group">
                         <label for="markets">市场</label>
                         <select v-model="search.marketId" class="form-control input-sm" @change="getTradeList()">
-                           <option v-for="mk in markets" :value="mk.Id">{{mk.Name}}</option>
+                           <option v-for="mk in markets" :value="mk">{{mk}}</option>
                         </select>
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
@@ -59,14 +59,14 @@
       data(){
          return{
             items: [],
-            markets: [{Id: -1,Name: '请选择市场'}],
-            search:{beginDate: '',endDate: '',marketId: -1,pageIndex: 1,pageSize: 10}
+            markets: [],
+            search:{beginDate: '',endDate: '',marketId: '',pageIndex: 1,pageSize: 10}
          }
       },
       mounted(){
          var vm = this;
 
-         vm.getTradeList();
+         vm.getMarketList();
 
          $('.group-date').datepicker({
             autoclose: true,
@@ -93,16 +93,12 @@
          // 获取成交记录表
          getTradeList: function(){
             var vm = this;
-            
+
             Custom.ajaxFn('/Market/GetTradeList',{
                data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){
-                     var list = res.Data.Items;
-                     for(var i = 0;i<list.length;i++){
-                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
-                     }
-                     vm.items = list;
+                     vm.items = res.Data.Items;
                   }else{
                      vm.items = [];
                      Custom.isSelected({title: '提示',txt: res.errorMsg,index: -1});
@@ -112,15 +108,36 @@
                   Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
                }
             });
-            vm.items = [{BidUserName: '买',AskUserName: '卖',Price: 100,Volume: 20,Amount: 2000,CreatedAt: '2016-12-14 10:59:12'}];
+         },
+         // 市场列表
+         getMarketList: function(){
+            var vm = this;
+               
+            Custom.ajaxFn('/Market/GetList',{
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data;
+                     vm.search.marketId = list[0];
+
+                     vm.markets = list;
+                     vm.getTradeList();
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.errorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
+               }
+            });
+         },
+         // 请选择一个管理员
+         IsSelected: function(title,txt){
+            var vm = this;
+            
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       },
-      // 请选择一个管理员
-      IsSelected: function(title,txt){
-         var vm = this;
-         
-         return Custom.isSelected({title: title,txt: txt,index: vm.item});
-      },
+      
       replace: true
    }
 </script>

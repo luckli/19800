@@ -9,12 +9,14 @@
                   <div class="col-xs-8 col-md-8 manage-btns">
                      <button class="btn btn-inverse" data-id="buz-dividends">确认分红</button>
                   </div>
-                  <div class="col-xs-4 col-md-4 form-inline text-right">
+                  <div class="col-xs-4 col-md-4 search form-inline text-right">
                      <div class="form-group">
-                        <label for="">发放日期</label>
-                        <select v-model="search.period" class="form-control input-sm" @change="getPageList()">
-                           <option v-for="dt in dates" :value="dt.id">{{dt.val}}</option>
-                        </select>
+                        <label class="control-label custom-label">期间</label>
+                     </div>
+                     <div class="input-daterange input-group group-date" id="datepicker">
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="st" @change="getPageList()" readonly />
+                        <span class="input-group-addon">to</span>
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="ed" @change="getPageList()" readonly />
                      </div>
                   </div>
                   <div class="clearfix"></div>
@@ -30,7 +32,7 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="item in items" :data-id="item.id">
+                        <tr v-for="item in items" :data-id="item.UserName">
                            <td>{{item.UserName}}</td>
                            <td>{{item.Email}}</td>
                            <td>{{item.AllottedAt}}</td>
@@ -58,17 +60,9 @@
                <div class="modal-body">
                   <form class="form-horizontal">
                      <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">用户Id</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="item" readonly />
-                        </div>
-                     </div>
-                     <div class="form-group">
                         <label class="col-md-4 control-label custom-label">期间</label>
                         <div class="col-md-6">
-                           <select class="form-control input-sm" v-model="period">
-                              <option v-for="pd in periods" :value="pd.id">{{pd.val}}</option>
-                           </select>
+                           <input type="text" class="form-control" v-model="search.period" readonly />
                         </div>
                      </div>
                   </form>
@@ -91,32 +85,40 @@
          return{
             items: [],
             item: -1,
-            periods: [],
-            period: '',
-            search: {pageIndex: 1,pageSize: 10,period: '20161212-20161218'}
+            st: '',
+            ed: '',
+            search: {pageIndex: 1,pageSize: 10,period: ''}
          }
       },
       mounted(){
          var vm = this;
 
-         vm.getIssueDateList();
+         vm.getPageList();
 
          $('.manage-btns').on('click',function(e){
             e = e || window.event;
 
-            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个用户";
+            var _id = $(e.target).attr('data-id');
             if('buz-dividends' == _id){
-               //if(vm.IsSelected(title,info)){
-                  $('#mod-dividends').modal('show');
-               //}
+               $('#mod-dividends').modal('show');
             }
          });
 
-         // 关闭重置模态框
-         $(".modal").on("hidden.bs.modal", function() {
-            if('mod-audit' == $(this).attr('id')){
-               vm.obj = {type: 1,result: false,remark: ''};
-            }
+         $('.group-date').datepicker({
+            autoclose: true,
+            format: 'yyyymmdd'
+         }).on('changeDate',function(ev){
+            var count = 0;
+            $('.group-date input').each(function(){
+               if(count == 0){
+                  vm.st = $(this).val();
+               }else if(count == 1){
+                  vm.ed = $(this).val();
+               }
+               count ++;
+            });
+            vm.search.period = vm.st+'-'+vm.ed;
+            vm.getPageList();
          });
       },
       methods:{
@@ -124,7 +126,7 @@
          toAllot: function(){
             var vm = this;
             Custom.ajaxFn('/Dividend/Allot',{
-               data: {period: vm.period},
+               data: {period: vm.search.period},
                callback: function(res){
                   if(res.IsSuccess){
                      vm.getPageList();
@@ -136,24 +138,6 @@
                   console.log(res);
                }
             });
-         },
-         // 获取发放日期列表
-         getIssueDateList: function(){
-            var vm = this;
-            vm.getPageList();
-            /*Custom.ajaxFn('',{
-               data: vm.search,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     vm.getPageList();
-                  }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
-                  }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });*/
          },
          getPageList: function(){
             var vm = this;
@@ -162,7 +146,11 @@
                data: vm.search,
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.items = res.Data.Items;
+                     var list = res.Data.Items;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].AllottedAt = Custom.dateTimeFormatter(list[i].AllottedAt);
+                     }
+                     vm.items = list;
                   }else{
                      Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
                   }
@@ -171,6 +159,12 @@
                   console.log(res);
                }
             });
+         },
+         // 请选择一个管理员
+         IsSelected: function(title,txt){
+            var vm = this;
+            
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       }
    }

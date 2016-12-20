@@ -45,7 +45,7 @@
       data(){
          return{
             items: [],
-            search:{beginDate: '',endDate: ''}
+            search:{beginDate: '',endDate: '',pageIndex: 1,pageSize: 10,marketId: '',frequency: ''}
          }
       },
       mounted(){
@@ -69,17 +69,25 @@
             vm.getTradeList();
          });
       },
-      watch: {
-         search(val,val2){
-            console.log(val,val2);
-         }
-      },
       methods:{
          // 获取成交量报表
          getTradeList: function(){
             var vm = this;
-            //vm.items = [{Id: 0,UserName: 'sky'}];
-            console.log(vm.search);
+
+            Custom.ajaxFn('/Market/GetTurnoverList',{
+               data: vm.search,
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.items = res.Data.Items;
+                  }else{
+                     vm.items = [];
+                     Custom.isSelected({title: '提示',txt: res.errorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
+               }
+            });
          }
       },
       replace: true

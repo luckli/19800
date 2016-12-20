@@ -13,7 +13,6 @@
                   <table id="vip-table" class="table table-striped table-bordered table-box">
                      <thead>
                         <tr>
-                           <th>Id</th>
                            <th>VIP等级</th>
                            <th>提现折扣率</th>
                            <th>充值折扣率</th>
@@ -23,7 +22,6 @@
                      </thead>
                      <tbody>
                         <tr v-for="item in items" :data-id="item.Id">
-                           <td>{{item.Id}}</td>
                            <td>{{item.VipLevel}}</td>
                            <td>{{item.WithdrawRate}}</td>
                            <td>{{item.DepositRate}}</td>
@@ -112,13 +110,17 @@
             }
          });
 
-         // 关闭重置模态框
-         $(".modal").on("hidden.bs.modal", function() {
-            vm.obj = {id: vm.item,withdrawRate: '',depositRate: '',tradeRate: ''};
-         });
-
          Custom.selectItem('#vip-table',vm.item,function(res){
             vm.item = res;
+
+            for(var i = 0;i<vm.items.length;i++){
+               if(res == vm.items[i].Id){
+                  vm.obj.id = vm.items[i].Id;
+                  vm.obj.withdrawRate = vm.items[i].WithdrawRate;
+                  vm.obj.depositRate = vm.items[i].DepositRate;
+                  vm.obj.tradeRate = vm.items[i].TradeRate;
+               }
+            }
          });
       },
       methods: {
@@ -126,13 +128,13 @@
          setRate: function(){
             var vm = this;
 
-            Custom.ajaxFn('/VipFee/GetList',{
+            Custom.ajaxFn('/VipFee/SetRate',{
                data: vm.obj,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.getVipList();
                   }
-                  $('#mod-vip').modal('show');
+                  $('#mod-vip').modal('hide');
                },
                errorCallback: function(res){
                   console.log(res);
@@ -146,7 +148,11 @@
             Custom.ajaxFn('/VipFee/GetList',{
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.items = res.Data.Items;
+                     var list = res.Data;
+                     for(var i = 0;i<list.length;i++){
+                        list[i].UpdatedAt = Custom.dateTimeFormatter(list[i].UpdatedAt);
+                     }
+                     vm.items = list;
                   }
                },
                errorCallback: function(res){
