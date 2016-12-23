@@ -71,9 +71,9 @@
                <ul class="sub-menu">
                    <li><router-link to="/main/cashCnyTask">人民币提现任务</router-link></li>
                    <li><router-link to="/main/cashCnyListPending">待处理人民币提现</router-link></li>
-                   <li><router-link to="/main/cashCnyList">人民币提现列表(管)</router-link></li>
+                   <li><router-link to="/main/cashCnys">人民币提现列表(管)</router-link></li>
                    <li><router-link to="/main/cashCoinListPending">coin待审核提现列表</router-link></li>
-                   <li><router-link to="/main/cashCoinList">coin提现列表</router-link></li>
+                   <li><router-link to="/main/cashCoins">coin提现列表</router-link></li>
                </ul>
             </li>
             <li class="has-sub">

@@ -7,6 +7,20 @@
                <div class="panel-heading"><h4 class="panel-title">成交量报表</h4></div>
                <div class="panel-body">
                   <form class="form-inline">
+                     <div class="form-group">
+                        <label>市场</label>
+                        <select class="form-control input-sm" v-model="search.marketId" @change="getTradeList()">
+                           <option v-for="market in markets" :value="market">{{market}}</option>
+                        </select>
+                     </div>
+                     <div class="form-group">
+                        <label>天数频度</label>
+                        <select class="form-control input-sm" v-model="search.frequency" @change="getTradeList()">
+                           <option value="1">1天</option>
+                           <option value="7">7天</option>
+                           <option value="30">30天</option>
+                        </select>
+                     </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
                         <input type="text" class="input-sm form-control date-range" v-model="search.beginDate" @change="getTradeList()" readonly />
                         <span class="input-group-addon">to</span>
@@ -45,13 +59,13 @@
       data(){
          return{
             items: [],
-            search:{beginDate: '',endDate: '',pageIndex: 1,pageSize: 10,marketId: '',frequency: ''}
+            search:{beginDate: '',endDate: '',pageIndex: 1,pageSize: 10,marketId: '',frequency: 1}
          }
       },
       mounted(){
          var vm = this;
 
-         vm.getTradeList();
+         vm.getMarketList();
 
          $('.group-date').datepicker({
             autoclose: true,
@@ -81,6 +95,27 @@
                      vm.items = res.Data.Items;
                   }else{
                      vm.items = [];
+                     Custom.isSelected({title: '提示',txt: res.errorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
+               }
+            });
+         },
+         // 市场列表
+         getMarketList: function(){
+            var vm = this;
+               
+            Custom.ajaxFn('/Market/GetList',{
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data;
+                     vm.search.marketId = list[0];
+
+                     vm.markets = list;
+                     vm.getTradeList();
+                  }else{
                      Custom.isSelected({title: '提示',txt: res.errorMsg,index: -1});
                   }
                },

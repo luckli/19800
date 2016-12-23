@@ -45,6 +45,9 @@
                         </tr>
                      </tbody>
                   </table>
+                  <!-- <div>
+                     <label>显示第 <span>{{(pageObj.index*10)-9}}</span> 至 <span>{{pageObj.index*10}}</span> 项结果，共 <span>{{pageObj.items}}</span> 项</label>
+                  </div> -->
                </div>
             </div>
          </div>

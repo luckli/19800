@@ -34,7 +34,7 @@
    </div>
 </template>
 <script>
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
    export default{
       name: 'header',
       mounted(){
@@ -48,10 +48,12 @@
                callback: function(res){
                   if(res.IsSuccess){
                      vm.$router.push('/login');
+                  }else{
+                     Custom.isSelected({title: '提示',txt: '登出失败，'+res.errorMsg,index: -1});
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败，'+res.statusText,index: -1});
                }
             });
          }

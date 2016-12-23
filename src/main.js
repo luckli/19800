@@ -16,8 +16,19 @@ router.beforeEach(function(to,from,next){
    if('login' == to.name){
       $('.pace-done').removeClass();
       $('.pace.pace-inactive').remove();
-      //router.push('/');
    }
+   setTimeout(function(){
+      $('.sub-menu>li>a').each(function(){
+         var url = $(this).attr('href'),
+            path = to.path;
+            url = url.substr(url.lastIndexOf('/')+1);
+            path = path.substr(path.lastIndexOf('/')+1);
+         if(path === url){
+            $(this).parent().parent().css('display','block').parent().addClass('expand');
+         }
+      });
+   },500);
+
    next(true);
 });
 

@@ -101,11 +101,11 @@
                      vm.items = res.Data.Items;
                   }else{
                      vm.items = [];
-                     Custom.isSelected({title: '提示',txt: res.errorMsg,index: -1});
+                     Custom.isSelected({title: '提示',txt: '获取成交记录，'+res.errorMsg,index: -1});
                   }
                },
                errorCallback: function(res){
-                  Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
+                  Custom.isSelected({title: '提示',txt: '请求失败，'+res.statusText,index: -1});
                }
             });
          },
@@ -122,11 +122,11 @@
                      vm.markets = list;
                      vm.getTradeList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.errorMsg,index: -1});
+                     Custom.isSelected({title: '提示',txt: '获取市场列表,'+res.errorMsg,index: -1});
                   }
                },
                errorCallback: function(res){
-                  Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
+                  Custom.isSelected({title: '提示',txt: '请求失败，'+res.statusText,index: -1});
                }
             });
          },

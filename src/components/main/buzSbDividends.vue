@@ -14,9 +14,9 @@
                         <label class="control-label custom-label">期间</label>
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="st" @change="getPageList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getPageList()" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="ed" @change="getPageList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getPageList()" readonly />
                      </div>
                   </div>
                   <div class="clearfix"></div>
@@ -62,7 +62,9 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">期间</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="search.period" readonly />
+                           <select class="form-control input-sm" v-model="period">
+                              <option v-for="r in range" :value="r">{{r}}</option>
+                           </select>
                         </div>
                      </div>
                   </form>
@@ -85,9 +87,9 @@
          return{
             items: [],
             item: -1,
-            st: '',
-            ed: '',
-            search: {pageIndex: 1,pageSize: 10,period: ''}
+            period: '',
+            range: [],
+            search: {pageIndex: 1,pageSize: 10,beginDate: '',endDate: ''}
          }
       },
       mounted(){
@@ -100,24 +102,26 @@
 
             var _id = $(e.target).attr('data-id');
             if('buz-dividends' == _id){
+               if(0==vm.range.length){
+                  vm.getPendingPeriodList();
+               }
                $('#mod-dividends').modal('show');
             }
          });
 
          $('.group-date').datepicker({
             autoclose: true,
-            format: 'yyyymmdd'
+            format: 'yyyy-mm-dd'
          }).on('changeDate',function(ev){
             var count = 0;
             $('.group-date input').each(function(){
                if(count == 0){
-                  vm.st = $(this).val();
+                  vm.search.beginDate = $(this).val();
                }else if(count == 1){
-                  vm.ed = $(this).val();
+                  vm.search.endDate = $(this).val();
                }
                count ++;
             });
-            vm.search.period = vm.st+'-'+vm.ed;
             vm.getPageList();
          });
       },
@@ -126,16 +130,17 @@
          toAllot: function(){
             var vm = this;
             Custom.ajaxFn('/Dividend/Allot',{
-               data: {period: vm.search.period},
+               data: {period: vm.period},
                callback: function(res){
                   if(res.IsSuccess){
                      vm.getPageList();
                   }else{
                      Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
                   }
+                  $('#mod-dividends').modal('hide');
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '分红失败，'+res.statusText,index: -1});
                }
             });
          },
@@ -151,6 +156,24 @@
                         list[i].AllottedAt = Custom.dateTimeFormatter(list[i].AllottedAt);
                      }
                      vm.items = list;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  console.log(res);
+               }
+            });
+         },
+         // 期间列表
+         getPendingPeriodList: function(){
+            var vm = this;
+
+            Custom.ajaxFn('/Dividend/GetPendingPeriodList',{
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.range = res.Data;
+                     vm.period = vm.range[0];
                   }else{
                      Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
                   }
