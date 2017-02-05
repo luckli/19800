@@ -34,6 +34,8 @@ function configRouter(){
          { path: 'msgTrigger', component: require('./components/main/msgTrigger') },
          { path: 'sysCurrency', component: require('./components/main/sysCurrency') },
          { path: 'sysVipSetting', component: require('./components/main/sysVipSetting') },
+         { path: 'sysLanguage', component: require('./components/main/sysLanguage') },
+         { path: 'sysCMS', component: require('./components/main/sysCMS') },
          { path: 'sysCapitalAccount', component: require('./components/main/sysCapitalAccount') },
       ]},
       {path: '*', redirect: 'login'}

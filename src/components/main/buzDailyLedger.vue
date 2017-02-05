@@ -10,9 +10,9 @@
                      <button class="btn btn-inverse" data-id="buz-addExtendTo">添加额外收支</button>
                   </div>
                   <div class="col-xs-4 col-md-4 search form-inline text-right">
-                     <div class="form-group">
-                        <label>搜索</label>
-                        <input type="text" class="form-control" placeholder="请输入" v-model="search.queryText" @keyup.enter="getPageList()" />
+                     <div class="form-group input-date">
+                        <label>日期</label>
+                        <input type="text" class="form-control" id="period" placeholder="请输入日期" v-model="search.period" readonly />
                      </div>
                   </div>
                   <div class="clearfix"></div>
@@ -96,20 +96,21 @@
    </div>
 </template>
 <script>
+   import '../../assets/lib/datepicker'
+   import '../../assets/lib/bootstrap-datepicker'
    import Custom from 'custom'
    export default {
       name: 'daily',
       data(){
          return {
             items: [],
+            banks: [],
             obj: {capitalAccountId: 0,amount: '',remark: ''},
-            search: {page: 1,pageSize: 10,queryText: ''}
+            search: {page: 1,pageSize: 10,period: ''}
          }
       },
       mounted(){
          var vm = this;
-
-         vm.getPageList();
 
          $('.manage-btns').on('click',function(e){
             e = e || window.event;
@@ -122,6 +123,25 @@
                $('#mod-addExtendTo').modal('show');
             }
          });
+
+         
+         $('#period').datepicker({
+            autoclose: true,
+            format: 'yyyy-mm-dd',
+            todayHighlight: true,
+            initialDate: new Date()
+         }).on('changeDate',function(ev){
+            vm.search.period = $(this).val();
+            vm.getPageList();
+            /*$('.input-date input').each(function(){
+               vm.search.period = $(this).val();
+               vm.getPageList();
+            });*/
+         });
+
+         var date = new Date();
+         vm.search.period = date.getFullYear() +'-'+(date.getMonth()+1) +'-'+date.getDate();
+         vm.getPageList();
       },
       methods: {
          // 添加额外收支
@@ -139,7 +159,6 @@
                   $('#mod-addExtendTo').modal('hide');
                },
                errorCallback: function(res){
-                  vm.banks = [];
                   Custom.isSelected({title: '提示',txt: '查看失败，'+res.statusText,index: -1});
                }
             });
@@ -147,6 +166,20 @@
          // 获取收支列表
          getPageList: function(){
             var vm = this;
+
+            Custom.ajaxFn('/Statistics/GetDailyList',{
+               data: vm.search,
+               callback: function(res){
+                  if(res.IsSuccess){
+                     vm.items = res.Data.Items;
+                  }else{
+                     Custom.isSelected({title: '提示',txt: '收支列表展示失败，'+res.statusText,index: -1});
+                  }
+               },
+               errorCallback: function(res){
+                  Custom.isSelected({title: '提示',txt: '查看失败，'+res.statusText,index: -1});
+               }
+            });
          },
          // 获取资金账号列表
          getCapitalAccount: function(){

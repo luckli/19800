@@ -8,7 +8,7 @@
             <div class="login-header">
                <div class="brand">
                  <span class="logo"></span>OA
-                 <small>欢迎进入资望OA管理后台</small>
+                 <small>欢迎进入资望OA管理后台{{validate.name}}</small>
                </div>
                <div class="icon">
                  <i class="fa fa-sign-in"></i>
@@ -16,19 +16,20 @@
             </div>
             <!-- end brand -->
             <div class="login-content">
-               <form method="POST" class="margin-bottom-0" @keyup.enter="login()">
+               <form method="POST" class="margin-bottom-0" @keydown.enter="login()">
                   <div class="form-group m-b-20">
                      <input type="text" class="form-control input-lg" v-model="account" name="name" placeholder="用户名" />
+                     <div class="msg" :class="{'on': validate.name}">用户名不能为空</div>
                   </div>
                   <div class="form-group m-b-20">
                      <input type="password" class="form-control input-lg" v-model="password" name="pwd" placeholder="登陆密码" />
+                     <div class="msg" :class="{'on': validate.pwd}">密码不能为空</div>
                   </div>
                   <div class="form-group m-b-20">
                      <input type="text" class="form-control input-lg" name="otp" v-model="otpCode" placeholder="谷歌身份验证码" />
                   </div>
                   <div class="login-buttons">
-                     <button type="submit" class="btn btn-success btn-block btn-lg" @click="login()" v-show="!sign.isLock">{{sign.txt}}</button>
-                     <button type="submit" class="btn btn-success btn-block btn-lg" @click="login()" v-show="sign.isLock" disabled>{{sign.txt}}</button>
+                     <button type="submit" class="btn btn-success btn-block btn-lg" @click="login()" :disabled="sign.isLock">{{sign.txt}}</button>
                   </div>
                </form>
             </div>
@@ -50,9 +51,15 @@
           sign:{txt: '登陆',isLock: false}
         }
       },
-      watch: {
-        account(val,val2){
-          console.log(val,val2);
+      computed: {
+        validate: function(){
+            var vm = this,flag = true,name = false,pwd=false;
+               name = !vm.account.trim();
+               pwd = !vm.password.trim();
+            return {
+               name: name,
+               pwd: pwd
+            }
         }
       },
       mounted(){
@@ -65,31 +72,34 @@
             e.stopPropagation();
 
             var vm = this;
+            
             vm.sign.txt = '登陆中...';
             vm.sign.isLock = true;
-            Custom.ajaxFn('/Home/Login',{
-               data: {account: vm.account,password: vm.password,otpCode: vm.otpCode},
-               callback: function(res){
-                  var msg = '';
-                  if(res.IsSuccess){
-                    vm.$router.push('/main');
-                  }else{
-                    if(res.Code == 2){msg = '账号不存在';
-                    }else if(res.Code == 4){msg = '密码错误';
-                    }else if(res.Code == 8){msg = '谷歌身份验证失败';
-                    }else if(res.Code == 16){msg = '账号被锁定';
-                    }else if(res.Code == 32){msg = '错误达到最大次数';}
-                    Custom.isSelected({title:'提示',txt: msg,index: -1});
+            if(true){
+              Custom.ajaxFn('/Home/Login',{
+                 data: {account: vm.account,password: vm.password,otpCode: vm.otpCode},
+                 callback: function(res){
+                    var msg = '';
+                    if(res.IsSuccess){
+                      vm.$router.push('/main');
+                    }else{
+                      if(res.Code == 2){msg = '账号不存在';
+                      }else if(res.Code == 4){msg = '密码错误';
+                      }else if(res.Code == 8){msg = '谷歌身份验证失败';
+                      }else if(res.Code == 16){msg = '账号被锁定';
+                      }else if(res.Code == 32){msg = '密码错误次数超过5次，半小时再登录';}
+                      Custom.isSelected({title:'提示',txt: msg,index: -1});
+                      vm.sign.txt = '登陆';
+                      vm.sign.isLock = false;
+                    }
+                 },
+                 errorCallback: function(res){
+                    console.log(res);
                     vm.sign.txt = '登陆';
                     vm.sign.isLock = false;
-                  }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-                  vm.sign.txt = '登陆';
-                  vm.sign.isLock = false;
-               }
-            });
+                 }
+              });
+            }
          }
       },
       replace:true

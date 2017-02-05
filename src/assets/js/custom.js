@@ -1,5 +1,5 @@
 define(function(){
-   var _ip = 'http://localhost' //10.0.0.218:81
+   var _ip = 'http://10.0.0.218:81' //localhost10.0.0.218:81
 
    Date.prototype.format = function (format) {
        var o = {
@@ -94,6 +94,7 @@ define(function(){
          });
       },
       dateTimeFormatter: Common.DateTimeFormatter,
+      dateFormatter: Common.DateFormatter,
       isSelected: function(opts){
         if(opts.index == -1){
            $.gritter.add({

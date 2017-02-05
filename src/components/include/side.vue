@@ -23,9 +23,9 @@
                 </a>
                <ul class="sub-menu">
                    <li><router-link to="/main/modAdmin">管理员列表</router-link></li>
-                   <li><router-link to="/main/modFinancial">财务列表</router-link></li>
+                   <!-- <li><router-link to="/main/modFinancial">财务列表</router-link></li>
+                   <li><a href="javascript:;">分红币发放记录</a></li> -->
                    <li><router-link to="/main/modUser">用户列表</router-link></li>
-                   <li><a href="javascript:;">分红币发放记录</a></li>
                    <li><router-link to="/main/modManage">模块管理</router-link></li>
                    <li><router-link to="/main/modRole">角色管理</router-link></li>
                </ul>
@@ -95,6 +95,8 @@
                <ul class="sub-menu">
                    <li><router-link to="/main/sysCurrency">币种列表</router-link></li>
                    <li><router-link to="/main/sysCapitalAccount">资金账户列表</router-link></li>
+                   <li><router-link to="/main/sysLanguage">多语言管理</router-link></li>
+                   <li><router-link to="/main/sysCMS">CMS管理</router-link></li>
                    <li><router-link to="/main/sysVipSetting">Vip设置</router-link></li>
                </ul>
             </li>

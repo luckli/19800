@@ -75,8 +75,7 @@
                      <div class="form-group">
                         <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-code">Code<span>*</span></label>
                         <div class="col-md-6 col-sm-6">
-                           <input type="text" class="form-control" id="curr-code" v-show="1==sign" placeholder="请输入Code" v-model="currObj.code" />
-                           <input type="text" class="form-control" id="curr-code" v-show="2==sign" v-model="currObj.Code" readonly />
+                           <input type="text" class="form-control" id="curr-code" placeholder="请输入Code" :readonly="2==sign" v-model="currObj.code" />
                         </div>
                      </div>
                      
@@ -151,8 +150,7 @@
                      <div class="form-group">
                         <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-assetId">assetId</label>
                         <div class="col-md-6 col-sm-6">
-                           <input type="text" class="form-control" id="curr-assetId" v-show="1==sign" v-model="currObj.AssetId" />
-                           <input type="text" class="form-control" id="curr-assetId" v-show="2==sign" v-model="currObj.AssetId" readonly />
+                           <input type="text" class="form-control" id="curr-assetId" :readonly="2==sign" v-model="currObj.AssetId" />
                         </div>
                      </div>
                      <div class="form-group">

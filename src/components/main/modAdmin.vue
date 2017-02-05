@@ -393,12 +393,6 @@
                }
             }
          });
-         $('.scanning').on('mouseover',function(){
-            $('#qrcode').animate({height: 100},1000);
-         });
-         $('.scanning').on('mouseout',function(){
-            $('#qrcode').animate({height: 0},1000);
-         });
       },
       data(){
          return {

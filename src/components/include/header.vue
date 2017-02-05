@@ -46,11 +46,11 @@
 
             Custom.ajaxFn('/Home/LoginOut',{
                callback: function(res){
-                  if(res.IsSuccess){
-                     vm.$router.push('/login');
+                  vm.$router.push('/login');
+                  /*if(res.IsSuccess){
                   }else{
                      Custom.isSelected({title: '提示',txt: '登出失败，'+res.errorMsg,index: -1});
-                  }
+                  }*/
                },
                errorCallback: function(res){
                   Custom.isSelected({title: '提示',txt: '请求失败，'+res.statusText,index: -1});

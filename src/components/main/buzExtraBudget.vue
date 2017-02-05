@@ -101,6 +101,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label class="col-md-9">显示第 <span>{{(search.pageIndex*10)-9}}</span> 至 <span>{{search.pageIndex*10}}</span> 项结果，共 <span>100</span> 项</label>
+                     <Page class="col-md-3" :index="search.pageIndex" :size="search.pageSize" :total="total"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -248,6 +252,7 @@
    import '../../assets/lib/datepicker'
    import '../../assets/lib/bootstrap-datepicker'
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'extra',
       data(){
@@ -260,6 +265,7 @@
             tab: 1,
             accObj: {capitalAccountId: '',ownerName: '',accountType: '',subbranch: '',accountNumber: '',amount: '',txNo: '',txFee: '',remark: ''},
             obj: {code: '',coldAddress: '',hotAddress: '',volume: '',txNo: '',remark: ''},
+            total: 10,
             search: {currencyId: '',capitalAccountId: '',beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
          }
       },
@@ -501,6 +507,9 @@
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

@@ -27,7 +27,8 @@ module.exports = {
       'src': path.resolve(__dirname, '../src'),
       'assets': path.resolve(__dirname, '../src/assets'),
       'components': path.resolve(__dirname, '../src/components'),
-      'custom': path.resolve('./src/assets/js/custom.js')
+      'custom': path.resolve('./src/assets/js/custom.js'),
+      'page': path.resolve('./src/components/include/Page')
     }
   },/*
   externals: {

@@ -66,7 +66,7 @@
                         <label class="col-md-4 control-label custom-label">币种<span>*</span></label>
                         <div class="col-md-6">
                            <select v-model="aktObj.currencyId" class="form-control">
-                              <option v-for="clist in currencyList" :value="clist.Code">{{clist.Code}}</option>
+                              <option v-for="clist in currencyList" :value="clist">{{clist}}</option>
                            </select>
                         </div>
                      </div>

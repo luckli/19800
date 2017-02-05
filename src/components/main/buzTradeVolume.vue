@@ -22,9 +22,9 @@
                         </select>
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" v-model="search.beginDate" @change="getTradeList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getTradeList()" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" v-model="search.endDate" @change="getTradeList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getTradeList()" readonly />
                      </div>
                   </form>
                   <table id="account-table" class="table table-striped table-bordered table-box">
