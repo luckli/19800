@@ -38,6 +38,7 @@
                 </a>
                <ul class="sub-menu">
                    <li><router-link to="/main/buzDailyLedger">日账本列表</router-link></li>
+                   <li><router-link to="/main/buzSysLedger">系统账本列表</router-link></li>
                    <li><router-link to="/main/buzAccount">账户列表</router-link></li>
                    <li><router-link to="/main/buzMarketDepth">市场深度</router-link></li>
                    <li><router-link to="/main/buzTradeVolume">成交量报表</router-link></li>
@@ -57,9 +58,10 @@
                    <span>充值管理</span>
                 </a>
                <ul class="sub-menu">
-                   <li><router-link to="/main/rcgRechargeList">充值码列表</router-link></li>
-                   <li><router-link to="/main/rcgCnyPending">Cny待确认充值</router-link></li>
-                   <li><router-link to="/main/rcgCoinList">Coin充值列表</router-link></li>
+                   <li><router-link to="/main/rcgRechargeList">充值码列表（管）</router-link></li>
+                   <li><router-link to="/main/rcgMyRechargeList/1">我的充值码列表</router-link></li>
+                   <li><router-link to="/main/rcgCnyPending">人民币充值列表</router-link></li>
+                   <li><router-link to="/main/rcgCoinList">虚拟币充值列表</router-link></li>
                </ul>
             </li>
             <li class="has-sub">
@@ -72,8 +74,8 @@
                    <li><router-link to="/main/cashCnyTask">人民币提现任务</router-link></li>
                    <li><router-link to="/main/cashCnyListPending">待处理人民币提现</router-link></li>
                    <li><router-link to="/main/cashCnys">人民币提现列表(管)</router-link></li>
-                   <li><router-link to="/main/cashCoinListPending">coin待审核提现列表</router-link></li>
-                   <li><router-link to="/main/cashCoins">coin提现列表</router-link></li>
+                   <li><router-link to="/main/cashCoinListPending">虚拟币待审核提现列表</router-link></li>
+                   <li><router-link to="/main/cashCoins">虚拟币提现列表</router-link></li>
                </ul>
             </li>
             <li class="has-sub">
@@ -98,6 +100,8 @@
                    <li><router-link to="/main/sysLanguage">多语言管理</router-link></li>
                    <li><router-link to="/main/sysCMS">CMS管理</router-link></li>
                    <li><router-link to="/main/sysVipSetting">Vip设置</router-link></li>
+                   <li><router-link to="/main/sysTotalLedger">总帐簿报表</router-link></li>
+                   <li><router-link to="/main/sysLoginLog">登陆日志</router-link></li>
                </ul>
             </li>
               <!-- begin sidebar minify button -->
@@ -110,7 +114,7 @@
    </div>
 </template>
 <script>
-  import '../../assets/lib/jquery-1.9.1.min'
+  import 'jquery'
    //import '../../../static/lib/jquery-1.9.1.min';
    import '../../assets/lib/jquery-migrate-1.1.0.min'
    import '../../assets/lib/jquery-ui.min'

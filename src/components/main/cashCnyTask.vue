@@ -28,8 +28,16 @@
                      <tbody>
                         <tr v-for="item in items" :data-id="item.Id">
                            <td>{{item.Id}}</td>
-                           <td>{{item.UserName}}</td>
-                           <td>{{item.Email}}</td>
+                           <td>
+                              <span class="bold">姓名：</span>{{item.UserName}}<br />
+                              <span class="bold">Email：</span>{{item.Email}}
+                           </td>
+                           <td>
+                              <span class="bold">银行：</span>{{item.BankName}}<br />
+                              <span class="bold">账号：</span>{{item.AccountNumber}}<br />
+                              <span class="bold">支行：</span>{{item.Subbranch}}<br />
+                              <span class="bold">打款金额：</span>{{item.PayAmount}}
+                           </td>
                            <td>{{item.CreatedAt}}</td>
                         </tr>
                         <tr v-if="0 == items.length">
@@ -37,6 +45,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -71,12 +83,15 @@
 </template>
 <script>
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'cashCny',
       data(){
          return{
             item: -1,
             items: [],
+            total: 0,
+            totalItems: 0,
             search: {queryText: '',pageIndex: 1,pageSize: 10}
          }
       },
@@ -105,15 +120,21 @@
             var vm = this;
 
             Custom.ajaxFn('/Withdraw/Assign',{
-               data: {withrawId: vm.item},
+               data: {withdrawId: vm.item},
+               vm: vm,
                callback: function(res){
+                  var msg = '领取成功！';
                   if(res.IsSuccess){
+                     Custom.isSelected({title: '提示',txt: '领取成功！',index: -1});
                      vm.getCashTaskList();
                      $('#mod-getCash').modal('hide');
+                  }else{
+                     msg = '领取失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -123,6 +144,7 @@
 
             Custom.ajaxFn('/Withdraw/GetAssignList',{
                data: vm.search,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data.Items;
@@ -130,10 +152,13 @@
                         list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
                      }
                      vm.items = list;
+                     vm.total = res.Data.TotalPage;
+                     vm.search.pageIndex = res.Data.CurrentPage;
+                     vm.totalItems = res.Data.TotalItems;
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -142,7 +167,15 @@
             var vm = this;
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getCashTaskList();
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

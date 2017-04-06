@@ -14,9 +14,9 @@
                         <label class="control-label custom-label">期间</label>
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getPageList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getPageList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" readonly />
                      </div>
                   </div>
                   <div class="clearfix"></div>
@@ -45,6 +45,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -81,6 +85,7 @@
 </template>
 <script>
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'dividends',
       data(){
@@ -89,6 +94,8 @@
             item: -1,
             period: '',
             range: [],
+            totalItems: 0,
+            total: 0,
             search: {pageIndex: 1,pageSize: 10,beginDate: '',endDate: ''}
          }
       },
@@ -122,8 +129,15 @@
                }
                count ++;
             });
-            vm.getPageList();
          });
+      },
+      watch: {
+         'search.beginDate'(cur,old){
+            this.getPageList();
+         },
+         'search.endDate'(cur,old){
+            this.getPageList();
+         }
       },
       methods:{
          // 确认分红
@@ -131,12 +145,15 @@
             var vm = this;
             Custom.ajaxFn('/Dividend/Allot',{
                data: {period: vm.period},
+               vm: vm,
                callback: function(res){
+                  var msg = '分红成功！';
                   if(res.IsSuccess){
                      vm.getPageList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     msg = '分红失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#mod-dividends').modal('hide');
                },
                errorCallback: function(res){
@@ -146,30 +163,37 @@
          },
          getPageList: function(){
             var vm = this;
-
-            Custom.ajaxFn('/Dividend/GetList',{
-               data: vm.search,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     var list = res.Data.Items;
-                     for(var i = 0;i<list.length;i++){
-                        list[i].AllottedAt = Custom.dateTimeFormatter(list[i].AllottedAt);
+            if((vm.search.beginDate && ''!=vm.search.beginDate) &&(vm.search.endDate && ''!=vm.search.endDate)){
+               Custom.ajaxFn('/Dividend/GetList',{
+                  data: vm.search,
+                  vm: vm,
+                  callback: function(res){
+                     if(res.IsSuccess){
+                        var list = res.Data.Items;
+                        for(var i = 0;i<list.length;i++){
+                           list[i].AllottedAt = Custom.dateTimeFormatter(list[i].AllottedAt);
+                        }
+                        vm.items = list;
+                        
+                        vm.total = res.Data.TotalPage;
+                        vm.search.pageIndex = res.Data.CurrentPage;
+                        vm.totalItems = res.Data.TotalItems;
+                     }else{
+                        Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
                      }
-                     vm.items = list;
-                  }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  },
+                  errorCallback: function(res){
+                     Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
                   }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
+               });
+            }
          },
          // 期间列表
          getPendingPeriodList: function(){
             var vm = this;
 
             Custom.ajaxFn('/Dividend/GetPendingPeriodList',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.range = res.Data;
@@ -179,9 +203,14 @@
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
                }
             });
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getPageList();
          },
          // 请选择一个管理员
          IsSelected: function(title,txt){
@@ -189,6 +218,10 @@
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
-      }
+      },
+      components:{
+         Page
+      },
+      replace: true
    }
 </script>

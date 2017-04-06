@@ -1,5 +1,8 @@
 ul,li{list-style-type: none;}
 ul{padding-left: 0; margin-bottom: 0;}
+textarea,a,div{
+   &:focus{outline: none;}
+}
 .msg{display: none; color: #e5603b;
    &.on{display: block;}
 }
@@ -51,3 +54,18 @@ ul{padding-left: 0; margin-bottom: 0;}
 }
 .datepicker{z-index: 1041 !important;}
 .cp{cursor: pointer;}
+#upload-img{opacity: 0; display: none;}
+#cms-table{table-layout: fixed;
+   >tbody{
+      >tr{
+         >td{
+            &.omit{overflow: hidden; width: 500px; white-space: nowrap; text-overflow: ellipsis;}
+         }
+      }
+   }
+}
+#ledgerChart{height: 500px; width: 100%;}
+.pic-style{display: inline-block; padding-right: 10px;
+   &:last-child{padding-right: 0;}
+   >img{width: 160px;}
+}

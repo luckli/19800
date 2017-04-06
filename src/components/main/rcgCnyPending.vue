@@ -8,18 +8,19 @@
                <div class="panel-body">
                   <div class="col-xs-8 col-md-8 manage-btns">
                      <button class="btn btn-inverse" data-id="cny-recharge">确认充值</button>
+                     <button class="btn btn-inverse" data-id="cny-cancel">取消充值</button>
+                     <button class="btn btn-inverse" data-id="cny-reset">重置充值</button>
                      <button class="btn btn-inverse" data-id="cny-clear">清理无效充值</button>
-                     <button class="btn btn-inverse" data-id="cny-revoke">撤销充值确认</button>
                   </div>
                   <div class="col-xs-4 col-md-4 form-inline text-right">
                      <div class="form-group">
                         <label>搜索</label>
-                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getPendingList()" placeholder="输入账号进行搜索..." />
+                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getList()" placeholder="输入账号进行搜索..." />
                      </div>
                      <div class="form-group radio-status">
-                        <label><input type="radio" name="status" value="1" v-model="search.status" @change="getPendingList()" /><span>待确认</span></label>
-                        <label><input type="radio" name="status" value="2" v-model="search.status" @change="getPendingList()" /><span>已完成</span></label>
-                        <label><input type="radio" name="status" value="3" v-model="search.status" @change="getPendingList()" /><span>已失效</span></label>
+                        <label><input type="radio" name="status" value="1" v-model="search.status" @change="getList()" /><span>待确认</span></label>
+                        <label><input type="radio" name="status" value="2" v-model="search.status" @change="getList()" /><span>已完成</span></label>
+                        <label><input type="radio" name="status" value="3" v-model="search.status" @change="getList()" /><span>已失效</span></label>
                      </div>
                   </div>
                   <div class="clearfix"></div>
@@ -59,6 +60,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -104,7 +109,7 @@
             <div class="modal-content">
                <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title"><span v-show="1==sign">清理无效充值</span><span v-show="2==sign">撤销充值</span></h4>
+                  <h4 class="modal-title"><span v-show="1==sign">取消充值</span><span v-show="2==sign">重置充值</span></h4>
                </div>
                <div class="modal-body">
                   <form class="form-horizontal">
@@ -114,7 +119,7 @@
                            <input type="text" class="form-control" v-model="item" readonly />
                         </div>
                      </div>
-                     <div class="form-group">
+                     <div class="form-group" v-show="1==sign">
                         <label class="col-md-4 control-label custom-label">备注</label>
                         <div class="col-md-6">
                            <input type="text" class="form-control" v-model="reason" />
@@ -134,6 +139,7 @@
 </template>
 <script>
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'cnyPending',
       data(){
@@ -144,13 +150,16 @@
             fundSourceId: -1,
             reason: '',
             sign: 1,
+            total: 0,
+            totalItems: 0,
+            status: 1,
             search: {queryText: '',status: 1,pageIndex: 1,pageSize: 10}
          }
       },
       mounted(){
          var vm = this;
 
-         vm.getPendingList();
+         vm.getList();
 
          // 关闭重置模态框
          $(".modal").on("hidden.bs.modal", function() {
@@ -166,21 +175,30 @@
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个待充值记录";
             if('cny-recharge' == _id){
                if(vm.IsSelected(title,info)){
-                  if(0==vm.banks.length){
-                     vm.getCapitalAccount();
+                  if(1==vm.Status){
+                     if(0==vm.banks.length){
+                        vm.getCapitalAccount();
+                     }
+                     $('#ca-recharge').modal('show');
+                  }else{
+                     info = '该数据不符合确认要求';
+                     vm.item = -1;
+                     vm.IsSelected(title,info);
                   }
-                  $('#ca-recharge').modal('show');
                }
-            }else if('cny-clear' == _id){
+            }else if('cny-cancel' == _id){
                vm.sign = 1;
                if(vm.IsSelected(title,info)){
                   $('#ca-key').modal('show');
                }
-            }else if('cny-revoke' == _id){
+            }else if('cny-reset' == _id){
                vm.sign = 2;
                if(vm.IsSelected(title,info)){
                   $('#ca-key').modal('show');
                }
+            }else if('cny-clear' == _id){
+               vm.sign = 3;
+               vm.toOK();
             }
          });
 
@@ -189,7 +207,7 @@
 
             for(var i = 0;i<vm.items.length;i++){
                if(res == vm.items[i].Id){
-
+                  vm.status = vm.items[i].Status;
                }
             }
          });
@@ -201,9 +219,10 @@
 
             Custom.ajaxFn('/Deposit/Confirm',{
                data: {depositId: vm.item,fundSourceId: vm.fundSourceId},
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.getPendingList();
+                     vm.getList();
                      $('#ca-recharge').modal('show');
                   }
                },
@@ -214,32 +233,48 @@
          },
          // 清理无效/撤销充值
          toOK: function(){
-            var vm = this,url='';
-            if(1 == vm.sign){
-               url = '/Deposit/Cancel';
-            }else if(2 == vm.sign){
+            var vm = this,url='/Deposit/Cancel',data = {depositId: vm.item,reason: vm.reason};
+            if(2 == vm.sign){
                url = '/Deposit/Reset';
+               delete data.reason;
+            }else if(3 == vm.sign){
+               url = '/Deposit/ClearInvalid';
+               data = null;
             }
 
             Custom.ajaxFn(url,{
-               data: {depositId: vm.item,reason: vm.reason},
+               data: data,
+               vm: vm,
                callback: function(res){
+                  var msg = '';
                   if(res.IsSuccess){
-                     vm.getPendingList();
-                     $('#ca-key').modal('hide');
+                     vm.getList();
+                     msg = '已取消！';
+                     if(2==vm.sign){
+                        msg = '已重置！';
+                     }else if(3==vm.sign){
+                        msg = '已清除！';
+                     }
+                     Custom.isSelected({title: '提示',txt: msg,index: -1});
+                  }else{
+                     if(2==vm.sign){
+                        Custom.isSelected({title: '提示',txt: '操作失败,'+res.ErrorMsg,index: -1});
+                     }
                   }
+                  $('#ca-key').modal('hide');
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
          // 获取待确认充值列表
-         getPendingList: function(){
+         getList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/Deposit/GetPendingList',{
+            Custom.ajaxFn('/Deposit/GetList',{
                data: vm.search,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data.Items;
@@ -247,12 +282,16 @@
                         list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
                      }
                      vm.items = list;
+
+                     vm.total = res.Data.TotalPage;
+                     vm.search.pageIndex = res.Data.CurrentPage;
+                     vm.totalItems = res.Data.TotalItems;
                   }else{
                      Custom.isSelected({title: '提示',txt: '获取列表失败，'+res.errorMsg,index: vm.item});
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败，'+res.errorMsg,index: vm.item});
                }
             });
          },
@@ -261,6 +300,7 @@
             var vm = this;
 
             Custom.ajaxFn('/CapitalAccount/List',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.banks = res.Data;
@@ -273,12 +313,21 @@
                }
             });
          },
+         pageFn: function(val){
+            var vm =this;
+            vm.search.pageIndex = val;
+            vm.getList()
+         },
          // 请选择一个管理员
          IsSelected: function(title,txt){
             var vm = this;
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
-      }
+      },
+      components:{
+         Page
+      },
+      replace: true
    }
 </script>

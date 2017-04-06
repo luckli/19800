@@ -14,9 +14,9 @@
                         <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getCnyCashList()" placeholder="输入email或姓名进行搜索..." />
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getCnyCashList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getCnyCashList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" readonly />
                      </div>
                      <div class="form-group radio-status">
                         <label v-for="state in statusList"><input type="radio" name="status" :value="state.id" v-model="search.status" @change="getCnyCashList()" /><span>{{state.val}}</span></label>
@@ -65,6 +65,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -107,6 +111,7 @@
    import '../../assets/lib/datepicker'
    import '../../assets/lib/bootstrap-datepicker'
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'cashCnyList',
       data(){
@@ -114,6 +119,8 @@
             items: [],
             item: -1,
             reason: '',
+            total: 0,
+            totalItems: 0,
             search: {queryText: '',status: 1,beginDate: '',endDate: '',pageIndex: 1,pageSize: 10},
             statusList: [{id: 1,val: '待审计'},{id: 2,val: '待分配'},{id: 3,val: '待处理'},{id: 4,val: '已完成'},{id: 5,val: '已取消'},{id: 6,val: '审计失败'}]
          }
@@ -136,7 +143,7 @@
                }
                count ++;
             });
-            vm.getCnyCashList();
+            //vm.getCnyCashList();
          });
 
          $('.manage-btns').on('click',function(e){
@@ -164,6 +171,14 @@
             vm.item = res;
          });
       },
+      watch: {
+         'search.beginDate'(cur,old){
+            this.getCnyCashList();
+         },
+         'search.endDate'(cur,old){
+            this.getCnyCashList();
+         }
+      },
       methods:{
          // 驳回
          toDismiss: function(){
@@ -171,15 +186,18 @@
 
             Custom.ajaxFn('/Withdraw/Rollback',{
                data: {withrawId: vm.item,reason: vm.reason},
+               vm: vm,
                callback: function(res){
+                  var msg = '驳回成功！';
                   if(res.IsSuccess){
                   }else{
-                     Custom.isSelected({title: title,txt: '驳回失败，'+res.ErrorMsg,index: -1});
+                     msg = '驳回失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#mod-dismiss').modal('hide');
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败，'+res.statusText,index: -1});
                }
             });
          },
@@ -187,23 +205,35 @@
          getCnyCashList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/Withdraw/GetList',{
-               data: vm.search,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     var list = res.Data.Items;
+            if((vm.search.beginDate && ''!=vm.search.beginDate) &&(vm.search.endDate && ''!=vm.search.endDate)){
+               Custom.ajaxFn('/Withdraw/GetList',{
+                  data: vm.search,
+                  vm: vm,
+                  callback: function(res){
+                     if(res.IsSuccess){
+                        var list = res.Data.Items;
 
-                     for(var i =0;i<list.length;i++){
-                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
-                        list[i].UpdateAt = Custom.dateTimeFormatter(list[i].UpdateAt);
+                        for(var i =0;i<list.length;i++){
+                           list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                           list[i].UpdateAt = Custom.dateTimeFormatter(list[i].UpdateAt);
+                        }
+                        vm.items = list;
+
+                        vm.total = res.Data.TotalPage;
+                        vm.search.pageIndex = res.Data.CurrentPage;
+                        vm.totalItems = res.Data.TotalItems;
                      }
-                     vm.items = list;
+                  },
+                  errorCallback: function(res){
+                     Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
                   }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
+               });
+            }
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getCnyCashList();
          },
          // 请选择一个管理员
          IsSelected: function(title,txt){
@@ -211,6 +241,9 @@
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

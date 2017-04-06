@@ -40,16 +40,17 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="item in items" :data-id="item.Id">
+                        <tr v-for="item in items" :data-id="item.UserId">
                            <td>{{item.Id}}</td>
                            <td>{{item.RealName}}</td>
                            <td>
                               <span v-if="1==item.Type">身份证</span>
-                              <span v-if="2==item.Type">护照</span>
-                              <span v-if="3==item.Type">台湾通行证</span>
-                              <span v-if="4==item.Type">港澳通行证</span>
-                              <span v-if="5==item.Type">企业证件</span>
-                              <span v-if="6==item.Type">特别认证</span>
+                              <span v-if="2==item.Type">高级身份</span>
+                              <span v-if="3==item.Type">护照</span>
+                              <span v-if="4==item.Type">高级护照</span>
+                              <span v-if="5==item.Type">台湾通行证</span>
+                              <span v-if="6==item.Type">港澳通行证</span>
+                              <span v-if="7==item.Type">企业证件</span>
                            </td>
                            <td>
                               <span v-if="0==item.Status">无状态</span>
@@ -66,6 +67,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.page*search.pageSize)-9}}</span> 至 <span>{{search.page*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.page" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -83,19 +88,20 @@
                      <tbody>
                         <tr>
                            <td>认证类别</td>
-                           <td>
-                              <span v-if="1==detailObj.Type">身份证</span>
+                           <td>{{detailObj.Type}}
+                              <!-- <span v-if="1==detailObj.Type">身份证</span>
                               <span v-if="2==detailObj.Type">护照</span>
                               <span v-if="3==detailObj.Type">台湾通行证</span>
                               <span v-if="4==detailObj.Type">港澳通行证</span>
                               <span v-if="5==detailObj.Type">企业证件</span>
-                              <span v-if="6==detailObj.Type">特别认证</span>
+                              <span v-if="6==detailObj.Type">特别认证</span> -->
                            </td>
                         </tr>
                         <tr>
                            <td>图片</td>
                            <td>
-                              <img v-for="img in detailObj.Images" :src="img" alt="图片" /></td>
+                              <a v-for="img in detailObj.Images" :href="img" target="_blank" class="pic-style"><img :src="img" alt="图片" /></a>
+                           </td>
                         </tr>
                         <tr>
                            <td>认证数据</td>
@@ -104,15 +110,14 @@
                         <tr>
                            <td>状态</td>
                            <td>
-                              <span v-if="0==detailObj.Status">无状态</span>
-                              <span v-if="1==detailObj.Status">待审核</span>
-                              <span v-if="2==detailObj.Status">审核通过</span>
-                              <span v-if="3==detailObj.Status">审核未通过</span>
+                              <span v-if="'Apply'==detailObj.Status">待审核</span>
+                              <span v-if="'AuditSucess'==detailObj.Status">审核通过</span>
+                              <span v-if="'AuditFail'==detailObj.Status">审核失败</span>
                            </td>
                         </tr>
                         <tr>
                            <td>审核人Id</td>
-                           <td>{{detailObj.ManagerId}}</td>
+                           <td>{{detailObj.AuditManagerId}}</td>
                         </tr>
                         <tr>
                            <td>审核时间</td>
@@ -130,7 +135,7 @@
                   </table>
                </div>
                <div class="modal-footer">
-                  <button class="btn btn-sm btn-inverse" @click="toModal()" >去审核</button>
+                  <button class="btn btn-sm btn-inverse" v-if="'AuditSucess'!=detailObj.Status" @click="toModal()">去审核</button>
                </div>
             </div>
          </div>
@@ -187,14 +192,17 @@
 </template>
 <script>
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'validate-apply',
       data(){
          return {
-            items: [],
-            types: [{id: 1,val: '身份证'},{id: 2,val: '护照'},{id: 3,val: '台湾通行证'},{id: 4,val: '港澳通行证'},{id: 5,val: '企业证件'},{id: 6,val: '特别认证'}],
-            status: [{id: 0,val: '无状态'},{id: 1,val: '待审核'},{id: 2,val: '审核通过'},{id: 3,val: '审核未通过'}],
             item: -1,
+            items: [],
+            total: 0,
+            totalItems: 0,
+            types: [{id: 1,val: '身份证',en: 'IdCard'},{id: 2,val: '高级身份',en: 'AdvancedIdCard'},{id: 3,val: '护照',en: 'Passport'},{id: 4,val: '高级护照',en: 'AdvancedPassport'},{id: 5,val: '台湾通行证',en: 'TaiwanResidentsPass'},{id: 6,val: '港澳通行证',en: 'HKAndMacauResidentsPass'},{id: 6,val: '企业证件',en: 'EnterpriseCertificate'}],
+            status: [{id: 0,val: '无状态'},{id: 1,val: '待审核'},{id: 2,val: '审核通过'},{id: 3,val: '审核未通过'}],
             obj:{type: 1,result: false,remark: ''},
             detailObj: {Type: '',Images: [],Data: '',Status: '',ManagerId: '',AuditTime: '',AuditRemark: '',CreateTime: ''},
             search: {userId: '',managerId: '',type: 1,status: 0,page: 1,pageSize: 10}
@@ -210,10 +218,10 @@
 
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个申请记录";
             if('buz-detail' == _id){
-               //if(vm.IsSelected(title,info)){
+               if(vm.IsSelected(title,info)){
                   vm.getDetail();
                   $('#mod-detail').modal('show');
-               //}
+               }
             }
          });
 
@@ -236,16 +244,19 @@
             Custom.ajaxFn('/Certification/Audit',{
                data: vm.obj,
                callback: function(res){
+                  var msg = '';
                   if(res.IsSuccess){
+                     msg = '审核通过！';
                      vm.getPageList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     msg = '审核失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#mod-detail').modal('hide');
                   $('#mod-audit').modal('hide');
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -255,18 +266,28 @@
          // 获取认证详细信息
          getDetail: function(){
             var vm = this;
-            vm.detailObj = {Type: '2',Images: ['./src/assets/img/user-1.jpg','./src/assets/img/user-2.jpg'],Data: '',Status: '2',ManagerId: '124',AuditTime: '2016-12-12',AuditRemark: 'remark',CreateTime: '2016-12-10'},
+            vm.detailObj = {},
             Custom.ajaxFn('/Certification/Detail',{
                data: {userId: vm.item,type: vm.search.type},
                callback: function(res){
                   if(res.IsSuccess){
-                     //vm.getPageList();
+                     if(res.Data){
+                        vm.detailObj = res.Data;
+                        vm.detailObj.CreateTime = Custom.dateTimeFormatter(res.Data.CreateTime);
+                        vm.detailObj.AuditTime = Custom.dateTimeFormatter(res.Data.AuditTime);
+                        for(var i =0;i<vm.types.length;i++){
+                           if(vm.detailObj.Type == vm.types[i].en){
+                              vm.detailObj.Type = vm.types[i].val;
+                              break;
+                           }
+                        }
+                     }
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     Custom.isSelected({title: '提示',txt: '获取失败，'+res.ErrorMsg,index: -1});
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -276,16 +297,31 @@
             Custom.ajaxFn('/Certification/GetPageList',{
                data: vm.search,
                callback: function(res){
+                  var list = [];
                   if(res.IsSuccess){
-                     vm.items = res.Data.Items;
+                     list = res.Data.Items;
+                     for(var i=0;i<list.length;i++){
+                        list[i].CreateTime = Custom.dateTimeFormatter(list[i].CreateTime);
+                        list[i].AuditTime = Custom.dateTimeFormatter(list[i].AuditTime);
+                     }
+                     vm.items = list;
+
+                     vm.total = res.Data.TotalPage;
+                     vm.search.page = res.Data.CurrentPage;
+                     vm.totalItems = res.Data.TotalItems;
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     Custom.isSelected({title: '提示',txt: '获取失败，'+res.ErrorMsg,index: -1});
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.page = index;
+            vm.getPageList();
          },
          // 请选择一个管理员
          IsSelected: function(title,txt){
@@ -293,6 +329,9 @@
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

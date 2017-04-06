@@ -234,16 +234,19 @@
             }
             Custom.ajaxFn(url,{
                data: vm.obj,
+               vm: vm,
                callback: function(res){
+                  var msg = '添加成功！';
                   if(res.IsSuccess){
                      vm.getPageList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: '操作失败,'+res.ErrorMsg,index: -1});
+                     msg = '添加失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#mod-operate').modal('hide');
                },
                errorCallback: function(res){
-                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -253,12 +256,15 @@
 
             Custom.ajaxFn('/lang/Delete',{
                data: {id: vm.item},
+               vm: vm,
                callback: function(res){
+                  var msg = '删除成功！';
                   if(res.IsSuccess){
                      vm.getPageList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: '获取列表失败,'+res.ErrorMsg,index: -1});
+                     msg = '删除失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#mod-del').modal('hide');
                },
                errorCallback: function(res){
@@ -272,6 +278,7 @@
 
             Custom.ajaxFn('/lang/GetPageList',{
                data: vm.search,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.items = res.Data || [];

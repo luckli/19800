@@ -8,7 +8,7 @@
             <div class="login-header">
                <div class="brand">
                  <span class="logo"></span>OA
-                 <small>欢迎进入资望OA管理后台{{validate.name}}</small>
+                 <small>欢迎进入资望OA管理后台</small>
                </div>
                <div class="icon">
                  <i class="fa fa-sign-in"></i>
@@ -44,23 +44,27 @@
     export default {
       name: 'login',
       data(){
-        return {
-          account: '',
-          password: '',
-          otpCode: '',
-          sign:{txt: '登陆',isLock: false}
-        }
+         return {
+            account: null,
+            password: null,
+            otpCode: '',
+            sign:{txt: '登陆',isLock: false}
+         }
       },
       computed: {
-        validate: function(){
-            var vm = this,flag = true,name = false,pwd=false;
+         validate: function(){
+            var vm = this,name = false,pwd=false;
+            if('string' === typeof vm.account){
                name = !vm.account.trim();
+            }
+            if('string' === typeof vm.password){
                pwd = !vm.password.trim();
+            }
             return {
                name: name,
                pwd: pwd
             }
-        }
+         }
       },
       mounted(){
          Pace.stop();
@@ -75,30 +79,29 @@
             
             vm.sign.txt = '登陆中...';
             vm.sign.isLock = true;
-            if(true){
-              Custom.ajaxFn('/Home/Login',{
-                 data: {account: vm.account,password: vm.password,otpCode: vm.otpCode},
-                 callback: function(res){
-                    var msg = '';
-                    if(res.IsSuccess){
-                      vm.$router.push('/main');
-                    }else{
-                      if(res.Code == 2){msg = '账号不存在';
-                      }else if(res.Code == 4){msg = '密码错误';
-                      }else if(res.Code == 8){msg = '谷歌身份验证失败';
-                      }else if(res.Code == 16){msg = '账号被锁定';
-                      }else if(res.Code == 32){msg = '密码错误次数超过5次，半小时再登录';}
-                      Custom.isSelected({title:'提示',txt: msg,index: -1});
-                      vm.sign.txt = '登陆';
-                      vm.sign.isLock = false;
-                    }
-                 },
-                 errorCallback: function(res){
-                    console.log(res);
-                    vm.sign.txt = '登陆';
-                    vm.sign.isLock = false;
-                 }
-              });
+            if(vm.sign.isLock){
+               Custom.ajaxFn('/Home/Login',{
+                  data: {account: vm.account,password: vm.password,otpCode: vm.otpCode},
+                  callback: function(res){
+                     var msg = '';
+                     if(res.IsSuccess){
+                        vm.$router.push('/main');
+                     }else{
+                        if(res.Code == 2){msg = '账号不存在';
+                        }else if(res.Code == 4){msg = '密码错误';
+                        }else if(res.Code == 8){msg = '谷歌身份验证失败';
+                        }else if(res.Code == 16){msg = '账号被锁定';
+                        }else if(res.Code == 32){msg = '密码错误次数超过5次，半小时再登录';}
+                        Custom.isSelected({title:'提示',txt: msg,index: -1});
+                        vm.sign.txt = '登陆';
+                        vm.sign.isLock = false;
+                     }
+                  },
+                  errorCallback: function(res){
+                     vm.sign.txt = '登陆';
+                     vm.sign.isLock = false;
+                  }
+               });
             }
          }
       },

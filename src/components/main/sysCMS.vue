@@ -19,6 +19,7 @@
                            <option value="1">新闻</option>
                            <option value="2">公告</option>
                            <option value="3">帮助</option>
+                           <option value="4">市场</option>
                         </select>
                      </div>
                      <div class="form-group">
@@ -35,22 +36,25 @@
                      <thead>
                         <tr>
                            <th>类别</th>
-                           <th>语言</th>
+                           <!-- <th>语言</th> -->
                            <th>标题</th>
                            <th>关键字</th>
                            <th>简介</th>
-                           <th>内容</th>
                            <th>发布时间</th>
                         </tr>
                      </thead>
                      <tbody>
                         <tr v-for="item in items" :data-id="item.Id">
-                           <td><span v-if="1==item.NewsType">新闻</span><span v-if="2==item.NewsType">公告</span><span v-if="3==item.NewsType">帮助</span></td>
-                           <td><span v-if="0==item.LangType">CN</span><span v-if="1==item.LangType">EN</span></td>
+                           <td>
+                              <span v-if="1==item.NewsType">新闻</span>
+                              <span v-if="2==item.NewsType">公告</span>
+                              <span v-if="3==item.NewsType">帮助</span>
+                              <span v-if="4==item.NewsType">市场</span>
+                           </td>
+                           <!-- <td><span v-if="0==item.LangType">CN</span><span v-if="1==item.LangType">EN</span></td> -->
                            <td>{{item.Title}}</td>
                            <td>{{item.KeyWords}}</td>
                            <td>{{item.Intro}}</td>
-                           <td>{{item.Content}}</td>
                            <td>{{item.PublishTime}}</td>
                         </tr>
                         <tr v-if="0 == items.length">
@@ -58,81 +62,14 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.page*search.pageSize)-9}}</span> 至 <span>{{search.page*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.page" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
       </div>
-      <!-- 添加/修改 -->
-      <div class="modal fade" id="mod-cmsOperate">
-         <div class="modal-dialog">
-            <div class="modal-content">
-               <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title"><span v-if="1==sign">添加</span><span v-if="2==sign">修改</span></h4>
-               </div>
-               <div class="modal-body">
-                  <form class="form-horizontal">
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">内容类别<span>*</span></label>
-                        <div class="col-md-6">
-                           <select class="form-control" v-model="obj.newsType">
-                              <option value="-1">请选择</option>
-                              <option value="1">新闻</option>
-                              <option value="2">公告</option>
-                              <option value="3">帮助</option>
-                           </select>
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">语言<span>*</span></label>
-                        <div class="col-md-6">
-                           <select class="form-control" v-model="obj.langType">
-                              <option value="-1">请选择</option>
-                              <option value="0">CN</option>
-                              <option value="1">EN</option>
-                           </select>
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">标题<span>*</span></label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" placeholder="请输入标题" v-model="obj.title" />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">关键字<span>*</span></label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" placeholder="请输入关键字" v-model="obj.keyWords" />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">简介<span>*</span></label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" placeholder="请输入简介" v-model="obj.intro" />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">内容<span>*</span></label>
-                        <div class="col-md-6">
-                           <textarea class="form-control" placeholder="请输入内容" v-model="obj.content"></textarea>
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">发布时间<span>*</span></label>
-                        <div class="col-md-6 publish-date" id="publish-date">
-                           <input type="text" class="form-control" placeholder="发布时间" readonly />
-                        </div>
-                     </div>
-                  </form>
-               </div>
-               <div class="modal-footer">
-                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toOperate()">确定</a>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!-- 添加/修改 -->
       
       <!-- 删除 -->
       <div class="modal fade" id="mod-cmsDel">
@@ -163,9 +100,8 @@
    </div>
 </template>
 <script>
-   import '../../assets/lib/datepicker'
-   import '../../assets/lib/bootstrap-datepicker'
    import Custom from 'custom'
+   import Page from 'page'
    export default {
       name: 'cms',
       data(){
@@ -173,7 +109,11 @@
             items: [],
             item: -1,
             sign: 1,
-            obj: {newsType: 1,langType: 0,title: '',keyWords: '',intro: '',content: '',publishTime: ''},
+            flag: false,
+            paramObj: {},
+            totalItems: 0,
+            total: 0,
+            obj: {newsType: 1,langType: 0,title: '',keyWords: '',intro: '',content: '',publishTime: '',tag: '',cover: '',linkUrl: ''},
             search: {newsType: -1,langType: -1,page: 1,pageSize: 10}
          }
       },
@@ -187,11 +127,13 @@
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个记录";
             if('cms-add' == _id){
                vm.sign = 1;
-               $('#mod-cmsOperate').modal('show');
+               vm.$router.push({path: 'sysAddCMS'});
+               //$('#mod-cmsOperate').modal('show');
             }else if('cms-modify' == _id){
                if(vm.IsSelected(title,info)){
                   vm.sign = 2;
-                  $('#mod-cmsOperate').modal('show');
+                  vm.$router.push({name: 'sysModifyCMS',params: {Id: vm.paramObj}});
+                  //$('#mod-cmsOperate').modal('show');
                }
             }else if('cms-del' == _id){
                if(vm.IsSelected(title,info)){
@@ -202,27 +144,13 @@
             if(1 != vm.sign && -1 != vm.sign){
                for(var i = 0;i<vm.items.length;i++){
                   if(vm.item == vm.items[i].Id){
-                     vm.obj.newsType = vm.items[i].NewsType;
-                     vm.obj.langType = vm.items[i].LangType;
                      vm.obj.title = vm.items[i].Title;
-                     vm.obj.keyWords = vm.items[i].KeyWords;
-                     vm.obj.intro = vm.items[i].Intro;
-                     vm.obj.content = vm.items[i].Content;
-                     vm.obj.publishTime = vm.items[i].PublishTime;
                   }
                }
             }
          });
 
-         
-         $('.publish-date input').datepicker({
-            autoclose: true,
-            format: 'yyyy-mm-dd'
-         }).on('changeDate',function(ev){
-            $('.publish-date input').each(function(){
-               vm.obj.publishTime = $(this).val();
-            });
-         });
+         //vm.editor = Custom.initEditor('news-box');
 
          // 关闭重置模态框
          $(".modal").on("hidden.bs.modal", function() {
@@ -230,41 +158,32 @@
          });
 
          Custom.selectItem('#cms-table',vm.item,function(res){
+            for(var i = 0;i<vm.items.length;i++){
+               if(res==vm.items[i].Id){
+                  vm.paramObj.id = vm.items[i].Id;
+                  vm.paramObj.newsType = vm.items[i].NewsType;
+                  vm.paramObj.langType = vm.items[i].LangType;
+                  vm.paramObj.title = vm.items[i].Title;
+                  vm.paramObj.keyWords = vm.items[i].KeyWords;
+                  vm.paramObj.intro = vm.items[i].Intro;
+                  vm.paramObj.content = vm.items[i].Content;
+                  vm.paramObj.publishTime = vm.items[i].PublishTime;
+                  vm.paramObj.cover = vm.items[i].Cover;
+                  vm.paramObj.tag = vm.items[i].Tag;
+                  vm.paramObj.linkUrl = vm.items[i].LinkUrl;
+               }
+            }
             vm.item = res;
          });
       },
       methods:{
-         // 操作
-         toOperate: function(){
-            var vm = this,url = '';
-            if(1==vm.sign){
-               url = '/news/Add';
-            }else if(2==vm.sign){
-               url = '/news/Update';
-               vm.$set(vm.obj,'id',vm.item);
-            }
-
-            Custom.ajaxFn(url,{
-               data: vm.obj,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     vm.getPageList();
-                  }else{
-                     Custom.isSelected({title: '提示',txt: '操作失败,'+res.ErrorMsg,index: -1});
-                  }
-                  $('#mod-cmsOperate').modal('hide');
-               },
-               errorCallback: function(res){
-                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
-               }
-            });
-         },
          // 删除
          toDel: function(){
             var vm = this;
 
             Custom.ajaxFn('/news/Delete',{
                data: {id: vm.item},
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.getPageList();
@@ -289,6 +208,7 @@
 
             Custom.ajaxFn('/news/GetPageList',{
                data: data,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data.Items || [];
@@ -296,7 +216,9 @@
                         list[i].PublishTime = Custom.dateFormatter(list[i].PublishTime);
                      }
                      vm.items = list;
-                     vm.item = -1;
+                     vm.total = res.Data.TotalPage;
+                     vm.totalItems = res.Data.TotalItems;
+                     vm.search.page = res.Data.CurrentPage;
                   }else{
                      Custom.isSelected({title: '提示',txt: '获取列表失败,'+res.ErrorMsg,index: -1});
                   }
@@ -306,12 +228,21 @@
                }
             });
          },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.page = index;
+            vm.getPageList();
+         },
          // 请选择一个管理员
          IsSelected: function(title,txt){
             var vm = this;
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
-      }
+      },
+      components:{
+         Page
+      },
+      replace: true
    }
 </script>

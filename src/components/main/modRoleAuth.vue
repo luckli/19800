@@ -7,8 +7,8 @@
                <div class="panel-heading"><h4 class="panel-title">角色权限分配</h4></div>
                <div class="panel-body">
                   <div class="col-xs-8 col-md-8 manage-btns">
-                     <button class="btn btn-inverse" data-id="auth-save" v-if="isSave" disabled>保存</button>
-                     <button class="btn btn-inverse" data-id="auth-save" v-else @click="setRoleAuth()">保存</button>
+                     <button class="btn btn-inverse" data-id="auth-save" @click="setRoleAuth()" :disabled="!isSave">保存</button>
+                     <a href="#/main/modRole" class="btn btn-inverse">返回</a>
                   </div>
                   <div class="clearfix"></div>
                   <table id="roleAuth-table" class="table table-bordered table-box">
@@ -24,15 +24,13 @@
                            <td v-if="role.ParentId == 0"><i class="fa fa-chevron-down"></i>{{role.Name}}</td>
                            <td v-else><span class="txt-indent">{{role.Name}}</span></td>
                            <td>
-                              <input type="checkbox" :name="role.Id" :id="role.Id" :data-id="0" v-if="role.isChecked" checked />
-                              <input type="checkbox" :name="role.Id" :id="role.Id" :data-id="0" v-else />
+                              <input type="checkbox" :name="role.Id" :id="role.Id" :data-id="0" :checked="role.isChecked" />
                            </td>
                            <td>
                               <ul class="role-list" v-if="role.ParentId != 0 && role.Limits.length != 0">
                                  <li v-for="limit in role.Limits">
                                     <label>
-                                       <input type="checkbox" :name="role.Id" :id="limit.Code" v-if="limit.isChecked" checked />
-                                       <input type="checkbox" :name="role.Id" :id="limit.Code" v-else /><span>{{limit.Name}}</span>
+                                       <input type="checkbox" :name="role.Id" :id="limit.Code" :checked="limit.isChecked" /><span>{{limit.Name}}</span>
                                     </label>
                                  </li>
                               </ul>
@@ -82,8 +80,8 @@
                   if(!$(e.target).attr('checked')){
                      $trs.each(function(){
                         if(_id == $(this).attr('data-parent')){
-                           $(this).find('>td>input[type="checkbox"]').attr('checked',false);
-                           $(this).find('.role-list input[type="checkbox"]:checked').attr('checked',false);
+                           $(this).find('>td>input[type="checkbox"]').prop('checked',false);
+                           $(this).find('.role-list input[type="checkbox"]:checked').prop('checked',false);
                         }
                      });
                   }
@@ -93,7 +91,7 @@
                      $trs.each(function(){
                         var id = $(this).attr('data-id');
                         if(id == _pId){
-                           $(this).find('>td>input[type="checkbox"]').attr('checked',true);
+                           $(this).find('>td>input[type="checkbox"]').prop('checked',true);
                         }
                      })
                   }else{
@@ -101,7 +99,7 @@
                      $trs.each(function(){
                         var pid = $(this).attr('data-parent'),
                            _input = $(this).find('>td>input[type="checkbox"]');
-                        if(pid == _pId && !!_input.attr('checked')){
+                        if(pid == _pId && !!_input.prop('checked')){
                            ids.push(_input.attr('name'));
                         }
                      });
@@ -110,11 +108,11 @@
                            $td = $(e.target),
                            $val = $(this).find('.role-list input[type="checkbox"]:checked');
                         if(id == _pId && 0 == ids.length){
-                           $(this).find('>td>input[type="checkbox"]').attr('checked',false);
+                           $(this).find('>td>input[type="checkbox"]').prop('checked',false);
                         }
                         if($td.attr('id') == id){
                            //console.log(id , $val.attr('name'));
-                           $val.attr('checked',false);
+                           $val.prop('checked',false);
                         }else{
                         }
                      });
@@ -124,13 +122,13 @@
                      $trs.each(function(){
                         var val = $(this).find('.role-list input[type="checkbox"]').attr('name');
                         if(val == _id){
-                           $(this).find('>td>input[type="checkbox"]').attr('checked',true);
+                           $(this).find('>td>input[type="checkbox"]').prop('checked',true);
                         }
                      });
                      $trs.each(function(){
                         var val = $(this).find('.role-list input[type="checkbox"]').attr('name');
                         if(val == _id){
-                           $(this).find('>td>input[type="checkbox"]').attr('checked',true);
+                           $(this).find('>td>input[type="checkbox"]').prop('checked',true);
                         }
                      });
                      var ids = -1;
@@ -140,7 +138,7 @@
                            id = $(this).attr('data-id'),
                            pid = $(this).attr('data-parent');
 
-                        if(id == $val.attr('name') && !!$val2.attr('checked')){
+                        if(id == $val.attr('name') && !!$val2.prop('checked')){
                            ids = pid;
                         }
                      });
@@ -149,13 +147,13 @@
                            var id = $(this).attr('data-id');
                            if(ids == id){
                               //console.log($(this).html());
-                              $(this).find('>td>input[type="checkbox"]').attr('checked',true);
+                              $(this).find('>td>input[type="checkbox"]').prop('checked',true);
                            }
                         });
                      }
                   }
                }
-               vm.isSave = false;
+               //vm.isSave = false;
             }
             if(0 == _pId && e.target == $i.get(0)){
                if(1 == _sign){
@@ -186,6 +184,7 @@
             var vm = this;
 
             Custom.ajaxFn('/Role/GetModuleAndLimitsList',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data,_tmp = {},_tmp2 = {},finalList = [];
@@ -229,7 +228,8 @@
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  vm.roleList = [];
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -238,6 +238,7 @@
 
             Custom.ajaxFn('/Role/GetModuleLimits',{
                data: {roleId: vm.pId},
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data,rlist = vm.roleList,_tmp = [];
@@ -266,7 +267,7 @@
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -275,17 +276,24 @@
             var vm = this;
 
             var data = vm.getSaveData();
+            console.log(JSON.stringify(data));
             Custom.ajaxFn('/Role/SetModuleLimit',{
                data: JSON.parse(JSON.stringify(data)),
+               vm: vm,
                callback: function(res){
+                  var msg = '';
                   if(res.IsSuccess){
                      //vm.roles = res.Data.Items;
                      vm.isSave = true;
                      vm.getRoleList2();
+                     msg = '设置成功！';
+                  }else{
+                     msg = '设置失败,'+res.statusText;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },

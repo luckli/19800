@@ -14,7 +14,7 @@
                      <div class="form-group">
                         <label for="">币种</label>
                         <select v-model="search.currencyId" class="form-control input-sm" @change="getCoinDepositList()">
-                           <option v-for="type in CTypeList" :value="type.Id">{{type.Code}}</option>
+                           <option v-for="type in CTypeList" :value="type">{{type}}</option>
                         </select>
                      </div>
                      <div class="form-group">
@@ -171,13 +171,18 @@
 
             Custom.ajaxFn('/CoinDeposit/Confirm',{
                data: {depositId: vm.item},
+               vm: vm,
                callback: function(res){
+                  var msg = '充值成功！';
                   if(res.IsSuccess){
                      $('#mod-rcg').modal('hide');
+                  }else{
+                     msg = '充值失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -187,13 +192,18 @@
 
             Custom.ajaxFn('/CoinDeposit/Cancel',{
                data: {depositId: vm.item,reason: vm.reason},
+               vm: vm,
                callback: function(res){
+                  var msg = '撤销成功！';
                   if(res.IsSuccess){
                      $('#mod-rcg').modal('hide');
+                  }else{
+                     msg = '撤销失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -203,13 +213,14 @@
 
             Custom.ajaxFn('/CoinDeposit/GetList',{
                data: vm.search,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.items = res.Data.Items;
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -218,10 +229,11 @@
             var vm = this;
 
             Custom.ajaxFn('/Currency/VirtualList',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.CTypeList = res.Data;
-                     vm.search.currencyId = res.Data[0].Id;
+                     vm.search.currencyId = res.Data[0];
                      vm.getCoinDepositList();
                   }
                },

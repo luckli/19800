@@ -12,6 +12,7 @@ function configRouter(){
          { path: 'modRoleAuth/:Id', name: 'modRoleAuth', component: require('./components/main/modRoleAuth') },
          { path: 'modUser', component: require('./components/main/modUser') },
          { path: 'buzDailyLedger', component: require('./components/main/buzDailyLedger') },
+         { path: 'buzSysLedger', component: require('./components/main/buzSysLedger') },
          { path: 'buzAccount', component: require('./components/main/buzAccount') },
          { path: 'buzMarketDepth', component: require('./components/main/buzMarketDepth') },
          { path: 'buzTradeVolume', component: require('./components/main/buzTradeVolume') },
@@ -28,6 +29,7 @@ function configRouter(){
          { path: 'cashCoins', component: require('./components/main/cashCoins') },
          { path: 'cashCoinListPending', component: require('./components/main/cashCoinListPending') },
          { path: 'rcgRechargeList', component: require('./components/main/rcgRechargeList') },
+         { path: 'rcgMyRechargeList/:Id', name: 'rcgMyRechargeList', component: require('./components/main/rcgRechargeList') },
          { path: 'rcgCnyPending', component: require('./components/main/rcgCnyPending') },
          { path: 'rcgCoinList', component: require('./components/main/rcgCoinList') },
          { path: 'msgModule/:Id',name: 'msgModule', component: require('./components/main/msgModule') },
@@ -36,7 +38,11 @@ function configRouter(){
          { path: 'sysVipSetting', component: require('./components/main/sysVipSetting') },
          { path: 'sysLanguage', component: require('./components/main/sysLanguage') },
          { path: 'sysCMS', component: require('./components/main/sysCMS') },
+         { path: 'sysModifyCMS/:Id',name: 'sysModifyCMS', component: require('./components/main/sysAddCMS') },
+         { path: 'sysAddCMS', component: require('./components/main/sysAddCMS') },
          { path: 'sysCapitalAccount', component: require('./components/main/sysCapitalAccount') },
+         { path: 'sysLoginLog', component: require('./components/main/sysLoginLog') },
+         { path: 'sysTotalLedger', component: require('./components/main/sysTotalLedger') }
       ]},
       {path: '*', redirect: 'login'}
    ];

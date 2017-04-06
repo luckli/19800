@@ -29,7 +29,7 @@
                            <td><i class="fa fa-chevron-down" v-if="list.ParentId == 0"></i>{{list.Name}}</td>
                            <td>{{list.ModuleKey}}</td>
                            <td>{{list.ModuleUrl}}</td>
-                           <td><i class="fa fa-fire"></i></td>
+                           <td><i :class="['fa',list.Icon?list.Icon:'fa-fire']"></i></td>
                            <td>{{list.SortIndex}}</td>
                            <td>{{list.IsUsable ? '可用': '不可用'}}</td>
                         </tr>
@@ -76,6 +76,12 @@
                         </div>
                      </div>
                      <div class="form-group">
+                        <label class="col-md-4 control-label custom-label" for="mod-Icon">模块图标</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" id="mod-Icon" v-model="addObj.Icon" placeholder="请输入图标标识" />
+                        </div>
+                     </div>
+                     <div class="form-group">
                         <label class="col-md-4 control-label custom-label" for="mod-SortIndex">顺序</label>
                         <div class="col-md-6">
                            <input type="text" class="form-control" id="mod-SortIndex" v-model="addObj.SortIndex" placeholder="请输入顺序" />
@@ -114,7 +120,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">模块名</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="addObj.name" readonly />
+                           <input type="text" class="form-control" v-model="addObj.Name" readonly />
                         </div>
                      </div>
                   </form>
@@ -135,7 +141,7 @@
       name: 'moduleManage',
       data(){
          return {
-            addObj: {name: '', ModuleKey: '',ParentId: -1,ModuleUrl: '',SortIndex: '',Icon: '',IsUsable: false},
+            addObj: {Name: '', ModuleKey: '',ParentId: -1,ModuleUrl: '',SortIndex: '',Icon: '',IsUsable: false},
             obj: {id: -1,sign: false},
             pids: [],
             lists: []
@@ -148,7 +154,7 @@
 
          // 关闭重置模态框
          $("#mod-add").on("hidden.bs.modal", function() {
-            vm.addObj = {name: '', ModuleKey: '',ParentId: vm.pids[0].id,ModuleUrl: '',SortIndex: '',Icon: '',IsUsable: false};
+            vm.reset();
          });
          $('#module-table').on('click',function(e){
             e = e || window.event;
@@ -161,7 +167,7 @@
                _sign = $tr.attr('data-sign'),
                _id = $tr.attr('data-id'),
                _pid = $tr.attr('data-parent'),k = '';
-            
+
             if($tr.length != 0){
                if(0 == _pid && e.target == $i.get(0)){
                   if(1 == _sign){
@@ -184,7 +190,7 @@
                      $tr.attr('data-sign',1);
                   }
                }
-               if(0 != _pid && e.target != $i.get(0)){
+               //if(0 != _pid && e.target != $i.get(0)){
                   if(vm.obj.id == _id){
                      vm.obj.id = -1;
                      $trs.removeClass('warning');
@@ -192,7 +198,7 @@
                      vm.obj.id = _id;
                      $tr.addClass('warning').siblings('tr').removeClass('warning');
                   }
-               }
+               //}
             }
          });
 
@@ -201,28 +207,30 @@
             e.preventDefault();
             e.stopPropagation();
 
-            var _id = $(e.target).attr('data-id');
+            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择权限模块";
+            if(('mod-modify' == _id)||('mod-del' == _id)){
+               for(var i = 0;i<vm.lists.length;i++){
+                  if(vm.obj.id == vm.lists[i].Id){
+                     for(var k in vm.lists[i]){
+                        vm.addObj[k] = vm.lists[i][k];
+                     }
+                  }
+               }
+            }
             if('mod-add' == _id){
                vm.obj.sign = false;
                $('#mod-add').modal('show');
             }else if('mod-modify' == _id){
                vm.obj.sign = true;
-               if(vm.isSelected('未选择任何模块','请选择要修改的模块')){
-                  for(var i = 0;i<vm.lists.length;i++){
-                     if(vm.obj.id == vm.lists[i].Id){
-                        for(var k in vm.lists[i]){
-                           vm.addObj[k] = vm.lists[i][k];
-                        }
-                     }
-                  }
+               if(vm.isSelected(title,info)){
                   $('#mod-add').modal('show');
                }
             }else if('mod-del' == _id){
-               if(vm.isSelected('未选择任何模块','请选择要删除的模块')){
+               if(vm.isSelected(title,info)){
                   $('#mod-del').modal('show');
                }
             }else if('mod-auth' == _id){
-               if(vm.isSelected('未选择任何模块','请选择一个模块')){
+               if(vm.isSelected(title,info)){
                   vm.$router.push({name: 'modAuth',params:{Id: vm.obj.id}});
                }
             }
@@ -238,46 +246,66 @@
             //console.log(vm.addObj);
             Custom.ajaxFn('/Module/Add',{
                data: vm.addObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '';
                   if(res.IsSuccess){
-                     vm.addObj = {name: '', ModuleKey: '',ParentId: vm.pids[0].id,ModuleUrl: '',SortIndex: '',Icon: '',IsUsable: false};
+                     vm.reset();
                      vm.getModuleList();
                      $('#mod-add').modal('hide');
+                     msg = '添加成功！';
+                  }else{
+                     msg = '添加失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
          // 修改模块
          modModify: function(){
             var vm = this;
+            console.log(vm.addObj);
             Custom.ajaxFn('/Module/Update',{
                data: vm.addObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '';
                   if(res.IsSuccess){
+                     vm.getModuleList();
                      $('#mod-add').modal('hide');
+                     msg = '修改成功！';
+                  }else{
+                     msg = '修改失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
          // 删除模块
          modDel: function(){
             var vm = this;
-
             Custom.ajaxFn('/Module/Delete',{
-               data: {id: vm.obj.id},
+               data: {Id: vm.obj.id},
+               vm: vm,
                callback: function(res){
+                  var msg = '';
                   if(res.IsSuccess){
                      $('#mod-del').modal('hide');
+                     vm.getModuleList();
+                     msg = '删除成功！';
+                  }else{
+                     msg = '删除失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -287,6 +315,7 @@
 
             Custom.ajaxFn('/Module/GetPageList',{
                data: {page: 1,pageSize: 100},
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      var list = res.Data.Items,_tmp = {},_tmp2 = {},finalList = [];
@@ -339,9 +368,13 @@
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
+         },
+         reset: function(){
+            var vm = this;
+            vm.addObj = {Name: '', ModuleKey: '',ParentId: vm.pids[0].id,ModuleUrl: '',SortIndex: '',Icon: '',IsUsable: false};
          },
          // 请选择一个模块
          isSelected: function(title,txt){

@@ -18,9 +18,9 @@
                         <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getCnyCashList()" placeholder="输入email或姓名进行搜索..." />
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" v-model="search.beginDate" @change="getCnyCashList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" v-model="search.endDate" @change="getCnyCashList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" readonly />
                      </div>
                      <div class="form-group radio-status">
                         <label><input type="radio" name="status" value="3" v-model="search.status" @change="getCnyCashList()" /><span>待处理</span></label>
@@ -61,6 +61,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -144,6 +148,7 @@
    import '../../assets/lib/datepicker'
    import '../../assets/lib/bootstrap-datepicker'
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'cashCnyListPending',
       data(){
@@ -151,11 +156,15 @@
             items: [],
             item: -1,
             banks: [],
-            search: {queryText: '',beginDate: '',endDate: '',status: 3,pageIndex: 1,pageSize: 10},
+            total: 0,
+            totalItems: 0,
+            sign: 6,
             accountType: '',
             reason: '',
-            cashObj:{withrawId: -1,capitalAccountId: -1,txFee: 0},
-            sign: 6
+            totalItems: 0,
+            total: 0,
+            search: {queryText: '',beginDate: '',endDate: '',status: 3,pageIndex: 1,pageSize: 10},
+            cashObj:{withrawId: -1,capitalAccountId: -1,txFee: 0}
          }
       },
       mounted(){
@@ -182,7 +191,7 @@
                }
                count ++;
             });
-            vm.getCnyCashList();
+            //vm.getCnyCashList();
          });
 
          $('.manage-btns').on('click',function(e){
@@ -220,6 +229,14 @@
             }
          });
       },
+      watch: {
+         'search.beginDate'(cur,old){
+            this.getCnyCashList();
+         },
+         'search.endDate'(cur,old){
+            this.getCnyCashList();
+         }
+      },
       methods:{
          // 导出提现列表
          exportCashList: function(){
@@ -251,16 +268,19 @@
 
             Custom.ajaxFn('/Withdraw/Complete',{
                data: vm.cashObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '提现成功！';
                   if(res.IsSuccess){
                      vm.getCnyCashList();
                      $('#mod-cplCash').modal('hide');
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     msg = '提现失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -271,15 +291,17 @@
             Custom.ajaxFn('/Withdraw/RollBack',{
                data: {withrawId: vm.item,reason: vm.reason},
                callback: function(res){
+                  var msg = '取消成功！';
                   if(res.IsSuccess){
                      vm.getCnyCashList();
                      $('#mod-cnlCash').modal('hide');
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     msg = '取消失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -290,14 +312,16 @@
             Custom.ajaxFn('/Withdraw/Reset',{
                data: {withrawId: id},
                callback: function(res){
+                  var msg = '重置成功！';
                   if(res.IsSuccess){
                      vm.getCnyCashList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     msg = '重置失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -305,23 +329,29 @@
          getCnyCashList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/Withdraw/GetMyList',{
-               data: vm.search,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     var list = res.Data.Items;
-                     for(var i = 0;i<list.length;i++){
-                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+            if((vm.search.beginDate && ''!=vm.search.beginDate) &&(vm.search.endDate && ''!=vm.search.endDate)){
+               Custom.ajaxFn('/Withdraw/GetMyList',{
+                  data: vm.search,
+                  callback: function(res){
+                     if(res.IsSuccess){
+                        var list = res.Data.Items;
+                        for(var i = 0;i<list.length;i++){
+                           list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                        }
+                        vm.items = list;
+
+                        vm.total = res.Data.TotalPage;
+                        vm.search.pageIndex = res.Data.CurrentPage;
+                        vm.totalItems = res.Data.TotalItems;
+                     }else{
+                        Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
                      }
-                     vm.items = list;
-                  }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                  },
+                  errorCallback: function(res){
+                     Custom.isSelected({title: '提示',txt: '获取失败！',index: -1});
                   }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
+               });
+            }
          },
          // 获取资金账号列表
          getCapitalAccount: function(){
@@ -336,9 +366,14 @@
                },
                errorCallback: function(res){
                   vm.banks = [];
-                  Custom.isSelected({title: '提示',txt: '查看失败，'+res.statusText,index: -1});
+                  Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
                }
             });
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getCnyCashList();
          },
          // 请选择一个管理员
          IsSelected: function(title,txt){
@@ -346,6 +381,9 @@
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

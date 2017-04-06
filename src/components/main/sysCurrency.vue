@@ -11,15 +11,16 @@
                      <button class="btn btn-inverse" data-id="currency-modify">修改币种</button>
                      <button class="btn btn-inverse" data-id="currency-lock">锁定</button>
                      <button class="btn btn-inverse" data-id="currency-unlock">解锁</button>
-                     <button class="btn btn-inverse" data-id="currency-phoneUnlock">余额提醒门槛</button>
-                     <button class="btn btn-inverse" data-id="currency-setUserVip">充值提醒门槛</button>
-                     <button class="btn btn-inverse" data-id="currency-transferTo">转入冷钱包</button>
-                     <button class="btn btn-inverse" data-id="currency-transferFrom">从冷钱包转入</button>
+                     <button class="btn btn-inverse" data-id="currency-balance">余额提醒门槛</button>
+                     <button class="btn btn-inverse" data-id="currency-deposit">充值提醒门槛</button>
+                     <!-- <button class="btn btn-inverse" data-id="currency-transferTo">转入冷钱包</button>
+                     <button class="btn btn-inverse" data-id="currency-transferFrom">冷钱包转出</button>
+                     <button class="btn btn-inverse" data-id="currency-hardTransfer">硬性支出</button> -->
                   </div>
                   <div class="col-xs-4 col-md-4 dataTable-filter text-right">
                      <label for="input-filter">
                         <span>搜索</span>
-                        <input type="text" class="form-control input-sm" v-model="pageObj.query" @input="getCurrencyList()" placeholder="输入进行搜索..." />
+                        <input type="text" class="form-control input-sm" v-model="search.queryText" @change="getCurrencyList()" placeholder="输入进行搜索..." />
                      </label>
                   </div>
                   <div class="clearfix"></div>
@@ -27,37 +28,41 @@
                      <thead>
                         <tr>
                            <th>Id</th>
-                           <th>Code</th>
-                           <th>充值固定手续费</th>
-                           <th>充值费率</th>
-                           <th>充值提醒线</th>
-                           <th>提现最小限额/笔</th>
-                           <th>提现最大限额/笔</th>
-                           <th>提现固定手续费</th>
-                           <th>提现费率</th>
-                           <th>提现验证金额门槛</th>
+                           <th>充值</th>
+                           <th>提现</th>
                            <th>余额提醒门槛</th>
+                           <th>锁定状态</th>
+                           <th>区块链地址</th>
                         </tr>
                      </thead>
                      <tbody>
                         <tr v-for="item in items" :data-id="item.Id" v-if="0 != items.length">
                            <td>{{item.Id}}</td>
-                           <td>{{item.Code}}</td>
-                           <td>{{item.DepositFixedFee}}</td>
-                           <td>{{item.DepositFeeRate}} %</td>
-                           <td>{{item.DepositNotifyLine}}</td>
-                           <td>{{item.WithdrawOnceMin}}</td>
-                           <td>{{item.WithdrawOnceLimit}}</td>
-                           <td>{{item.WithdrawFixedFee}}</td>
-                           <td>{{item.WithdrawFeeRate}} %</td>
-                           <td>{{item.WithdrawVerifyLine}}</td>
+                           <td>
+                              <span class="bold">固定手续费：</span>{{item.DepositFixedFee}}<br />
+                              <span class="bold">费率：</span>{{item.DepositFeeRate}}<br />
+                              <span class="bold">提醒线：</span>{{item.DepositNotifyLine}}<br />
+                           </td>
+                           <td>
+                              <span class="bold">最小限额/笔：</span>{{item.WithdrawOnceMin}}<br />
+                              <span class="bold">最大限额/笔：</span>{{item.WithdrawOnceLimit}}<br />
+                              <span class="bold">固定手续费：</span>{{item.WithdrawFixedFee}}<br />
+                              <span class="bold">费率：</span>{{item.WithdrawFeeRate}}<br />
+                              <span class="bold">固定手续费：</span>{{item.WithdrawVerifyLine}}<br />
+                           </td>
                            <td>{{item.BalanceNotifyLine}}</td>
+                           <td><span v-if="item.IsLocked">锁定</span><span v-else>正常</span></td>
+                           <td>{{item.ExplorerUrl}}</td>
                         </tr>
                         <tr v-else>
                            <td colspan="11">表中数据为空</td>
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -73,9 +78,23 @@
                <div class="modal-body">
                   <form class="form-horizontal form-bordered">
                      <div class="form-group">
-                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-code">Code<span>*</span></label>
+                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-code">Id<span>*</span></label>
                         <div class="col-md-6 col-sm-6">
-                           <input type="text" class="form-control" id="curr-code" placeholder="请输入Code" :readonly="2==sign" v-model="currObj.code" />
+                           <input type="text" class="form-control" id="curr-code" placeholder="币种英文简写，如cny,btc..." :readonly="2==sign" v-model="currObj.Id" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 col-sm-4 control-label custom-label" for="upload-pic">货币图标<span>*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                           <img :src="currObj.ImageUrl" id="currency-pic" v-show="currObj.ImageUrl && ''!=currObj.ImageUrl" alt="图标">
+                           <label for="upload-pic" class="btn btn-sm btn-success"><i class="fa fa-plus"></i>添加货币图标</label>
+                           <label class="btn btn-sm btn-inverse" @click="upload()" v-show="flag">上传</label>
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-name">名称<span>*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                           <input type="text" class="form-control" id="curr-name" placeholder="币种中文名称，如人民币,比特币..." v-model="currObj.Name" />
                         </div>
                      </div>
                      
@@ -148,9 +167,27 @@
                         </div>
                      </div>
                      <div class="form-group">
-                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-assetId">assetId</label>
+                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-assetId">资产Id</label>
                         <div class="col-md-6 col-sm-6">
                            <input type="text" class="form-control" id="curr-assetId" :readonly="2==sign" v-model="currObj.AssetId" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-totalCirculation">发行量</label>
+                        <div class="col-md-6 col-sm-6">
+                           <input type="number" class="form-control" id="curr-totalCirculation" v-model="currObj.TotalCirculation" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-minTxVolume">最小交易量<span>*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                           <input type="text" class="form-control" id="curr-minTxVolume" v-model="currObj.MinTxVolume" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 col-sm-4 control-label custom-label" for="curr-minTxVolume">区块链浏览器地址<span>*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                           <input type="text" class="form-control" id="curr-minTxVolume" v-model="currObj.ExplorerUrl" />
                         </div>
                      </div>
                      <div class="form-group">
@@ -166,18 +203,22 @@
                         </div>
                      </div>
                   </form>
+                  <form enctype="multipart/form-data" id="upload-img" method="post">
+                     <input type="file" name="upfile" id="upload-pic" @change="imgFn" />
+                  </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="1==sign" @click="addCurrency()">添加</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="2==sign" @click="modifyCurrency()">修改</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="operateCurrency()">
+                     <span v-show="1==sign">添加</span><span v-show="2==sign">修改</span>
+                  </a>
                </div>
             </div>
          </div>
       </div>
       <!-- 添加币种 -->
 
-      <!-- 锁定 -->
+      <!-- 锁定/解锁 -->
       <div class="modal fade" id="curr-lock">
          <div class="modal-dialog">
             <div class="modal-content">
@@ -188,22 +229,21 @@
                <div class="modal-body">
                   <form class="form-horizontal">
                      <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">Code</label>
+                        <label class="col-md-4 control-label custom-label">Id</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="currObj.Code" readonly />
+                           <input type="text" class="form-control" v-model="currObj.Id" readonly />
                         </div>
                      </div>
                   </form>
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="3==sign" @click="toLock()">锁定</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="4==sign" @click="toUnlock()">解锁</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="toLock()"><span v-show="3==sign">锁定</span><span v-show="4==sign">解锁</span></a>
                </div>
             </div>
          </div>
       </div>
-      <!-- 锁定 -->
+      <!-- 锁定/解锁 -->
 
       <!-- 提醒门槛 -->
       <div class="modal fade" id="curr-notice">
@@ -211,14 +251,14 @@
             <div class="modal-content">
                <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title"><span v-show="5==sign">修改预警金额</span><span v-show="6==sign">修改充值通知金额</span></h4>
+                  <h4 class="modal-title"><span v-show="5==sign">修改余额通知金额</span><span v-show="6==sign">修改充值通知金额</span></h4>
                </div>
                <div class="modal-body">
                   <form class="form-horizontal">
                      <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">Code</label>
+                        <label class="col-md-4 control-label custom-label">Id</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="currObj.Code" readonly />
+                           <input type="text" class="form-control" v-model="currObj.Id" readonly />
                         </div>
                      </div>
                      <div class="form-group" v-show="5==sign">
@@ -237,60 +277,7 @@
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="5==sign" @click="modifyBalanceNotifyLine()">提交</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="6==sign" @click="modifyDepositNotifyLine()">提交</a>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!-- 提醒门槛 -->
-
-      <!-- 冷钱包 -->
-      <div class="modal fade" id="curr-transfer">
-         <div class="modal-dialog">
-            <div class="modal-content">
-               <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                  <h4 class="modal-title"><span v-show="7==sign">虚拟币转入冷钱包</span><span v-show="8==sign">虚拟币接受从冷钱包转入</span></h4>
-               </div>
-               <div class="modal-body">
-                  <form class="form-horizontal">
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">Code</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="currObj.Code" readonly />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">冷钱包地址</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" placeholder="请输入冷钱包地址" v-model="cgObj.coldWalletAddress" />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">转入金额</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" placeholder="请输入转入金额" v-model="cgObj.volume" />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">交易流水号</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" placeholder="请输入交易流水号" v-model="cgObj.txNo" />
-                        </div>
-                     </div>
-                     <div class="form-group">
-                        <label class="col-md-4 control-label custom-label">备注</label>
-                        <div class="col-md-6">
-                           <input type="text" class="form-control" placeholder="请描述转账的意图" v-model="cgObj.remark" />
-                        </div>
-                     </div>
-                  </form>
-               </div>
-               <div class="modal-footer">
-                  <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="7==sign" @click="toTransferTo()">确定</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" v-show="8==sign" @click="toAcceptTransferFrom()">确定</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="modifyNotifyLine()">提交</a>
                </div>
             </div>
          </div>
@@ -300,18 +287,23 @@
 </template>
 <script>
    import '../../assets/css/reset'
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
+   import Page from 'page'
+   import 'jForm'
    //import Test from './test'
    export default {
       name: 'currency',
       data(){
          return {
-            pageObj: {query: '',index: 1,size: 10},
+            search: {queryText: '',pageIndex: 1,pageSize: 10},
             currObj: {IsVirtualCoin: false,IsBasicCoin: false},
-            cgObj: {coldWalletAddress: '',volume: 0,txNo: '',remark: ''},
+            cgObj: {transferType: 1,fromAddress: '',toAddress: '',volume: 0,fee: 0,txNo: '',remark: ''},
             item: -1,
             items: [],
-            sign: 1
+            sign: 1,
+            total: 0,
+            totalItems: 0,
+            flag: false
          }
       },
       mounted(){
@@ -323,13 +315,13 @@
             e = e || window.event;
 
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一种货币";
-            if(vm.item != -1){
+            /*if(vm.item != -1){
                for(var i =0;i<vm.items.length;i++){
                   if(vm.item == vm.items[i].Id){
                      vm.currObj = vm.items[i];
                   }
                }
-            }
+            }*/
             if('currency-add' == _id){
                vm.sign = 1;
                vm.currObj = {IsVirtualCoin: false,IsBasicCoin: false};
@@ -349,12 +341,12 @@
                if(vm.IsSelected(title,info)){
                   $('#curr-lock').modal('show');
                }
-            }else if('currency-phoneUnlock' == _id){
+            }else if('currency-balance' == _id){
                vm.sign = 5;
                if(vm.IsSelected(title,info)){
                   $('#curr-notice').modal('show');
                }
-            }else if('currency-setUserVip' == _id){
+            }else if('currency-deposit' == _id){
                vm.sign = 6;
                if(vm.IsSelected(title,info)){
                   $('#curr-notice').modal('show');
@@ -369,15 +361,30 @@
                if(vm.IsSelected(title,info)){
                   $('#curr-transfer').modal('show');
                }
+            }else if('currency-hardTransfer' == _id){
+               vm.sign = 9;
+               if(vm.IsSelected(title,info)){
+                  $('#curr-transfer').modal('show');
+               }
             }
          });
 
          // 关闭重置模态框
          $(".modal").on("hidden.bs.modal", function() {
+            /*Custom.resetForms($('form'));
+            $('table>tbody>tr').each(function(){
+               $(this).removeClass('warning');
+            });
+            for(var i =0;i<vm.items.length;i++){
+               if(vm.item == vm.items[i].Id){
+                  vm.currObj = vm.items[i];
+               }
+            }
+            vm.item = -1;*/
             if(1==vm.sign){
                vm.currObj = {IsVirtualCoin: false,IsBasicCoin: false};
             }else if(7==vm.sign || 8== vm.sign){
-               vm.cgObj = {coldWalletAddress: '',volume: 0,txNo: '',remark: ''};
+               vm.cgObj = {fromAddress: '',toAddress: '',volume: 0,fee: 0,txNo: '',remark: ''};
             }
          });
 
@@ -389,6 +396,14 @@
                }
             }
          });
+      },
+      watch: {
+         'search.beginDate'(cur,old){
+            this.getCurrencyList();
+         },
+         'search.endDate'(cur,old){
+            this.getCurrencyList();
+         }
       },
       /*components: {
          Test
@@ -402,145 +417,127 @@
       },*/
       methods:{
          // 添加币种
-         addCurrency: function(){
-            var vm = this;
+         operateCurrency: function(){
+            var vm = this,url='/Currency/Create';
+            if(1==vm.sign){
+               if(vm.currObj && vm.currObj.DepositFeeRate){vm.currObj.DepositFeeRate = (vm.currObj.DepositFeeRate * 0.01).toFixed(2);}
+               if(vm.currObj && vm.currObj.WithdrawFeeRate){vm.currObj.WithdrawFeeRate = (vm.currObj.WithdrawFeeRate * 0.01).toFixed(2);}
+               if(vm.currObj && vm.currObj.Id){delete vm.currObj.Id;}
+            }else{
+               url ='/Currency/Modify';
+            }
 
-            if(vm.currObj && vm.currObj.DepositFeeRate){vm.currObj.DepositFeeRate = (vm.currObj.DepositFeeRate * 0.01).toFixed(2);}
-            if(vm.currObj && vm.currObj.WithdrawFeeRate){vm.currObj.WithdrawFeeRate = (vm.currObj.WithdrawFeeRate * 0.01).toFixed(2);}
-            if(vm.currObj && vm.currObj.Id){delete vm.currObj.Id;}
-            Custom.ajaxFn('/Currency/Create',{
+            Custom.ajaxFn(url,{
                data: vm.currObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '添加成功！';
                   if(res.IsSuccess){
-                     vm.currObj = {IsVirtualCoin: false,IsBasicCoin: false};
+                     if(1==vm.sign){
+                        vm.currObj = {IsVirtualCoin: false,IsBasicCoin: false};
+                     }
                      vm.getCurrencyList();
                      $('#curr-addModify').modal('hide');
+                  }else{
+                     msg = '添加失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
-         modifyCurrency: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Currency/Modify',{
-               data: vm.currObj,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     vm.getCurrencyList();
-                     $('#curr-addModify').modal('hide');
-                  }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
-         },
-         // 锁定
+         // 锁定/解锁
          toLock: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Currency/Lock',{
-               data: {Code: vm.currObj.Code},
+            var vm = this,
+               url = '/Currency/Lock';
+            if(4==vm.sign){
+               url = '/Currency/Unlock';
+            }
+            Custom.ajaxFn(url,{
+               data: {id: vm.currObj.Id},
+               vm: vm,
                callback: function(res){
+                  var msg = '锁定成功！';
+                  if(4==vm.sign){
+                     msg = '解锁成功！';
+                  }
                   if(res.IsSuccess){
                      vm.getCurrencyList();
                      $('#curr-lock').modal('hide');
+                  }else{
+                     msg = '锁定失败，'+res.ErrorMsg;
+                     if(4==vm.sign){
+                        msg = '解锁失败，'+res.ErrorMsg;
+                     }
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
-         // 解锁
-         toUnlock: function(){
-            var vm = this;
+         // 修改余额/充值提醒门槛
+         modifyNotifyLine: function(flag){
+            var vm = this,
+               url = '/Currency/ModifyBalanceNotifyLine',data = {Id: vm.currObj.Id,amount: vm.currObj.BalanceNotifyLine};
 
-            Custom.ajaxFn('/Currency/Lock',{
-               data: {Code: vm.currObj.Code},
+            if(6==vm.sign){
+               url = '/Currency/ModifyDepositNotifyLine';
+               data.amount = vm.currObj.DepositNotifyLine;
+            }
+            Custom.ajaxFn(url,{
+               data: data,
+               vm: vm,
                callback: function(res){
-                  if(res.IsSuccess){
-                     vm.getCurrencyList();
-                     $('#curr-lock').modal('hide');
+                  var msg = '修改成功！';
+                  if(6==vm.sign){
+                     msg = '提醒成功！';
                   }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
-         },
-         // 修改余额提醒门槛
-         modifyBalanceNotifyLine: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Currency/ModifyBalanceNotifyLine',{
-               data: {Code: vm.currObj.Code,amount: vm.currObj.BalanceNotifyLine},
-               callback: function(res){
-                  if(res.IsSuccess){
-                     vm.getCurrencyList();
-                     $('#curr-notice').modal('hide');
-                  }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
-         },
-         // 修改充值提醒门槛
-         modifyDepositNotifyLine: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Currency/ModifyDepositNotifyLine',{
-               data: {Code: vm.currObj.Code,amount: vm.currObj.DepositNotifyLine},
-               callback: function(res){
                   if(res.IsSuccess){
                      vm.getCurrencyList();
                      $('#curr-notice').modal('hide');
+                  }else{
+                     msg = '修改失败，'+res.ErrorMsg;
+                     if(6==vm.sign){
+                        msg = '提醒失败，'+res.ErrorMsg;
+                     }
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
-         // 虚拟币转入冷钱包
+         // 冷钱包操作
          toTransferTo: function(){
-            var vm = this;
-            vm.cgObj.code = vm.currObj.Code;
-
+            var vm = this,type=1;
+            vm.cgObj.id = vm.currObj.Id;
+            if(8==vm.sign){
+               type = 2;
+            }else if(9==vm.sign){
+               type = 3;
+            }
+            vm.cgObj.transferType = type;
             Custom.ajaxFn('/Currency/TransferTo',{
                data: vm.cgObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '操作成功！';
                   if(res.IsSuccess){
-                     vm.cgObj = {coldWalletAddress: '',volume: 0,txNo: '',remark: ''};
+                     vm.cgObj = {transferType: 1,fromAddress: '',toAddress: '',volume: 0,fee: 0,txNo: '',remark: ''};
                      vm.getCurrencyList();
                      $('#curr-transfer').modal('hide');
+                  }else{
+                     msg = '操作失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
-               }
-            });
-         },
-         // 虚拟币接受从冷钱包转入
-         toAcceptTransferFrom: function(){
-            var vm = this;
-            vm.cgObj.code = vm.currObj.Code;
-
-            Custom.ajaxFn('/Currency/AcceptTransferFrom',{
-               data: vm.cgObj,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     vm.cgObj = {coldWalletAddress: '',volume: 0,txNo: '',remark: ''};
-                     vm.getCurrencyList();
-                     $('#curr-transfer').modal('hide');
-                  }
-               },
-               errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -549,24 +546,62 @@
             var vm = this;
 
             Custom.ajaxFn('/Currency/GetList',{
-               data: {queryText: vm.pageObj.query,pageIndex: vm.pageObj.index,pageSize: vm.pageObj.size},
+               data: vm.search,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.items = res.Data.Items;
+
+                     vm.total = res.Data.TotalPage;
+                     vm.totalItems = res.Data.TotalItems;
+                     vm.search.pageIndex = res.Data.CurrentPage;
+                  }else{
+                     vm.items = [];
                   }
                },
                errorCallback: function(res){
                   vm.items = [];
-                  vm.IsSelected('提示','获取币种列表,'+res.statusText,-1);
+                  //Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getCurrencyList();
          },
          // 请选择一个管理员
          IsSelected: function(title,txt){
             var vm = this;
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
+         },
+         // 仅图片上传过滤
+         imgFn: function(that){
+            var vm = this,
+               allowed = ['image/jpg', 'image/jpeg', 'image/png'],
+               files = that.target.files[0];
+
+            if(-1!=allowed.indexOf(files.type)){
+               vm.flag = true;
+            }
+         },
+         // 上传图片
+         upload: function(){
+            var vm = this;
+            Custom.ajaxUpload($('#upload-img'),{
+               callback: function(res){
+                  if('SUCCESS'==res.state){
+                     vm.currObj.ImageUrl = res.url;
+                     $('#upload-img')[0].reset();
+                     vm.flag = false;
+                  }
+               }
+            });
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

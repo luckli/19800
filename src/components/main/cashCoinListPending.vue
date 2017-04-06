@@ -13,16 +13,16 @@
                      <div class="form-group">
                         <label for="">币种</label>
                         <select v-model="search.currencyId" class="form-control input-sm" @change="getCoinList()">
-                           <option v-for="type in CTypeList" :value="type.Id">{{type.Code}}</option>
+                           <option v-for="type in CTypeList" :value="type">{{type}}</option>
                         </select>
                      </div>
                      <div class="form-group">
                         <input type="text" class="form-control input-sm" v-model="search.queryText" @input="getCoinList()" placeholder="输入email或userId进行搜索..." />
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" v-model="search.beginDate" @change="getCoinList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" v-model="search.endDate" @change="getCoinList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" readonly />
                      </div>
                   </form>
                   <div class="clearfix"></div>
@@ -64,6 +64,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -100,6 +104,7 @@
    import '../../assets/lib/datepicker'
    import '../../assets/lib/bootstrap-datepicker'
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'coinCash',
       data(){
@@ -107,6 +112,8 @@
             items: [],
             item: -1,
             CTypeList: [],
+            total: 0,
+            totalItems: 0,
             search: {currencyId: '',queryText: '',beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
          }
       },
@@ -128,7 +135,7 @@
                }
                count ++;
             });
-            vm.getCoinList();
+            //vm.getCoinList();
          });
 
          // 显示弹层
@@ -147,6 +154,14 @@
             vm.item = res;
          });
       },
+      watch: {
+         'search.beginDate'(cur,old){
+            this.getCoinList();
+         },
+         'search.endDate'(cur,old){
+            this.getCoinList();
+         }
+      },
       methods:{
          // 审核通过
          toAudit: function(){
@@ -154,15 +169,18 @@
 
             Custom.ajaxFn('/CoinWithdraw/Audit',{
                data: {withrawId: vm.item},
+               vm: vm,
                callback: function(res){
+                  var msg = '审核通过！';
                   if(res.IsSuccess){
                   }else{
-                     Custom.isSelected({title: '提示',txt: res.ErrorMsg,index: -1});
+                     msg = '审核失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#cash-ok').modal('hide');
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败，'+res.statusText,index: -1});
                }
             });
          },
@@ -170,31 +188,39 @@
          getCoinList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/CoinWithdraw/GetPendingList',{
-               data: vm.search,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     var list = res.Data.Items;
-                     for(var i = 0;i<list.length;i++){
-                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+            if((vm.search.beginDate && ''!=vm.search.beginDate) &&(vm.search.endDate && ''!=vm.search.endDate)){
+               Custom.ajaxFn('/CoinWithdraw/GetPendingList',{
+                  data: vm.search,
+                  vm: vm,
+                  callback: function(res){
+                     if(res.IsSuccess){
+                        var list = res.Data.Items;
+                        for(var i = 0;i<list.length;i++){
+                           list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                        }
+                        vm.items = list;
+
+                        vm.total = res.Data.TotalPage;
+                        vm.search.pageIndex = res.Data.CurrentPage;
+                        vm.totalItems = res.Data.TotalItems;
                      }
-                     vm.items = list;
+                  },
+                  errorCallback: function(res){
+                     Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
                   }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
+               });
+            }
          },
          // 获取币种列表
          getCurrencyTypeList: function(){
             var vm = this;
 
             Custom.ajaxFn('/Currency/VirtualList',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.CTypeList = res.Data;
-                     vm.search.currencyId = res.Data[0].Id;
+                     vm.search.currencyId = res.Data[0];
 
                      vm.getCoinList();
                   }
@@ -204,12 +230,20 @@
                }
             });
          },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getCoinList();
+         },
          // 请选择一个id
          IsSelected: function(title,txt){
             var vm = this;
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace:true
    }

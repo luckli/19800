@@ -6,13 +6,29 @@
             <div class="panel panel-inverse">
                <div class="panel-heading"><h4 class="panel-title">用户列表</h4></div>
                <div class="panel-body">
-                  <div class="col-xs-8 col-md-8 manage-btns">
+                  <div class="col-xs-6 col-md-6 manage-btns">
                      <button class="btn btn-inverse" data-id="user-lock">锁定</button>
                      <button class="btn btn-inverse" data-id="user-dLock">普通解锁</button>
                      <button class="btn btn-inverse" data-id="user-fLock">强制解锁</button>
                      <button class="btn btn-inverse" data-id="user-relieveGugVali">解除谷歌身份验证</button>
                      <button class="btn btn-inverse" data-id="user-phoneUnlock">解除手机锁定</button>
                      <button class="btn btn-inverse" data-id="user-setUserVip">设置用户VIP等级</button>
+                  </div>
+                  <div class="dataTable-filter ">
+                     <form class="form-inline text-right">
+                        <div class="form-group">
+                           <label for="search">ID：</label>
+                           <input type="text" class="form-control input-sm" v-model="searchObj.id" @keyup.enter="getUserList()" placeholder="输入phone进行搜索..." />
+                        </div>
+                        <div class="form-group">
+                           <label for="search">邮箱：</label>
+                           <input type="text" class="form-control input-sm" v-model="searchObj.email" @keyup.enter="getUserList()" placeholder="输入email进行搜索..." />
+                        </div>
+                        <div class="form-group">
+                           <label for="search">手机：</label>
+                           <input type="text" class="form-control input-sm" v-model="searchObj.phone" @keyup.enter="getUserList()" placeholder="输入phone进行搜索..." />
+                        </div>
+                     </form>
                   </div>
                   <div class="clearfix"></div>
                   <table id="user-table" class="table table-striped table-bordered table-box">
@@ -41,8 +57,9 @@
                         </tr>
                      </tbody>
                   </table>
-                  <div>
-                     <label>显示第 <span>{{(pageObj.index*10)-9}}</span> 至 <span>{{pageObj.index*10}}</span> 项结果，共 <span>{{pageObj.items}}</span> 项</label>
+                  <div class="clearfix">
+                     <label class="pull-left">显示第 <span>{{(pageObj.index*pageObj.size)-9}}</span> 至 <span>{{pageObj.index*pageObj.size}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="pageObj.index" :size="pageObj.size" :total="total" :callbacks="pageFn"></Page>
                   </div>
                </div>
             </div>
@@ -103,7 +120,8 @@
 </template>
 <script>
    import '../../assets/css/reset'
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
+   import Page from 'page'
    export default {
       name: 'user',
       data(){
@@ -112,9 +130,11 @@
             sign: 1,
             uList: [],
             vipId: -1,
-            vips: [{id: -1,val:'请选择'},{id: 1,val:'Vip0'},{id: 2,val:'Vip1'},{id: 3,val:'Vip2'},{id: 4,val:'Vip3'},{id: 5,val:'Vip4'},{id: 6,val:'Vip5'},{id: 7,val:'Vip6'},{id: 8,val:'Vip7'},{id: 9,val:'Vip8'},{id: 10,val:'Vip9'},{id: 11,val:'Vip10'}],
-            pageObj: {index: 1,size: 10,items: 0},
             remark: '',
+            total: 0,
+            totalItems: 0,
+            vips: [{id: -1,val:'请选择'},{id: 1,val:'Vip0'},{id: 2,val:'Vip1'},{id: 3,val:'Vip2'},{id: 4,val:'Vip3'},{id: 5,val:'Vip4'},{id: 6,val:'Vip5'},{id: 7,val:'Vip6'},{id: 8,val:'Vip7'},{id: 9,val:'Vip8'},{id: 10,val:'Vip9'},{id: 11,val:'Vip10'}],
+            pageObj: {index: 1,size: 10},
             searchObj: {email: '',phone: '',id: ''},
             userObj: {name: ''}
          }
@@ -132,7 +152,6 @@
                }
             }
          });
-
          vm.getUserList();
 
          // 关闭重置模态框
@@ -193,15 +212,20 @@
 
             Custom.ajaxFn('/User/Lock',{
                data: {id: vm.item,remark: vm.remark},
+               vm: vm,
                callback: function(res){
+                  var msg = '锁定成功！';
                   if(res.IsSuccess){
                      vm.remark = '';
                      vm.getUserList();
                      $('#user-lock').modal('hide');
+                  }else{
+                     msg = '锁定失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -211,15 +235,20 @@
 
             Custom.ajaxFn('/User/UnLock',{
                data: {id: vm.item,remark: vm.remark},
+               vm: vm,
                callback: function(res){
+                  var msg = '解锁成功！';
                   if(res.IsSuccess){
                      vm.remark = '';
                      vm.getUserList();
                      $('#user-lock').modal('hide');
+                  }else{
+                     msg = '解锁失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -229,15 +258,20 @@
 
             Custom.ajaxFn('/User/MandatoryUnLock',{
                data: {id: vm.item,remark: vm.remark},
+               vm: vm,
                callback: function(res){
+                  var msg = '解锁成功！';
                   if(res.IsSuccess){
                      vm.remark = '';
                      vm.getUserList();
                      $('#user-lock').modal('hide');
+                  }else{
+                     msg = '解锁失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -247,15 +281,20 @@
 
             Custom.ajaxFn('/User/UnBindOtp',{
                data: {id: vm.item,remark: vm.remark},
+               vm: vm,
                callback: function(res){
+                  var msg = '解绑成功！';
                   if(res.IsSuccess){
                      vm.remark = '';
                      vm.getUserList();
                      $('#user-lock').modal('hide');
+                  }else{
+                     msg = '解绑失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -265,17 +304,20 @@
 
             Custom.ajaxFn('/User/UnBindPhone',{
                data: {id: vm.item,remark: vm.remark},
+               vm: vm,
                callback: function(res){
+                  var msg = '解绑成功！';
                   if(res.IsSuccess){
                      vm.remark = '';
                      vm.getUserList();
                      $('#user-lock').modal('hide');
                   }else{
-                     Custom.isSelected({title: title,txt: txt,index: -1})
+                     msg = '解绑失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -289,18 +331,21 @@
             }
             Custom.ajaxFn('/User/SetVipLevel',{
                data: {id: vm.item,level: vm.vipId,remark: vm.remark},
+               vm: vm,
                callback: function(res){
+                  var msg = '设置成功！';
                   if(res.IsSuccess){
                      vm.remark = '';
                      vm.vipId = -1;
                      vm.getUserList();
                      $('#user-lock').modal('hide');
                   }else{
-                     Custom.isSelected({title: title,txt: txt,index: -1});
+                     msg = '设置失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -310,16 +355,25 @@
             
             Custom.ajaxFn('/User/GetPageList',{
                data: {email: vm.searchObj.email,phone: vm.searchObj.phone,id: vm.searchObj.id,page: vm.pageObj.index,pageSize: vm.pageObj.size},
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.uList = res.Data.Items;
-                     vm.pageObj.items = res.Data.TotalItems;
+
+                     vm.total = res.Data.TotalPage;
+                     vm.pageObj.index = res.Data.CurrentPage;
+                     vm.totalItems = res.Data.TotalItems;
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.pageObj.index = index||1;
+            vm.getUserList();
          },
          // 请选择一个管理员
          IsSelected: function(title,txt){
@@ -327,6 +381,9 @@
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

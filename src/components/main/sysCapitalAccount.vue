@@ -27,6 +27,7 @@
                            <th>账户银行</th>
                            <th>余额</th>
                            <th>是否锁定</th>
+                           <th>默认账户</th>
                         </tr>
                      </thead>
                      <tbody>
@@ -35,13 +36,18 @@
                            <td>{{item.AccountNumber}}</td>
                            <td>{{item.BankName}}</td>
                            <td>{{item.Balance}}</td>
-                           <td><span v-if="1 == item.AccountStatus">正常</span><span v-if="2 == item.AccountStatus">锁定</span><span v-if="3 == item.AccountStatus">禁用</span></td>
+                           <td><span v-if="1 == item.Status">正常</span><span v-if="2 == item.Status">锁定</span><span v-if="3 == item.Status">禁用</span></td>
+                           <td><span v-if="1 == item.IsDefault">默认</span><span v-else>非默认</span></td>
                         </tr>
                         <tr v-if="0 == items.length">
-                           <td colspan="5" style="text-align:center;">无数据</td>
+                           <td colspan="6" style="text-align:center;">无数据</td>
                         </tr>
                      </tbody>
                   </table>
+                  <div class="clearfix">
+                     <label class="pull-left">显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -114,7 +120,7 @@
                      <div class="form-group">
                         <label class="col-md-4 control-label custom-label">账号</label>
                         <div class="col-md-6">
-                           <input type="text" class="form-control" v-model="accountNumber" readonly />
+                           <input type="text" class="form-control" v-model="accountObj.AccountNumber" readonly />
                         </div>
                      </div>
                   </form>
@@ -131,6 +137,7 @@
 </template>
 <script>
    import Custom from 'custom'
+   import Page from 'page'
    export default {
       name: 'ca',
       data(){
@@ -139,11 +146,13 @@
             item: -1,
             sign: -1,
             txt: '锁定',
-            accountNumber: '',
+            accountObj: {Id: ''},
             aktObj: {userId: '1',currencyId: 0,ownerName: '',accountType: 0,subbranch: '',accountNumber: ''},
             search: {queryText: '',pageIndex: 1,pageSize: 10},
             accountList: [],
-            currencyList: []
+            currencyList: [],
+            totalItems: 0,
+            total: 0
          }
       },
       mounted(){
@@ -159,6 +168,13 @@
             e = e || window.event;
 
             var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个账户";
+            if(('ca-lock' == _id) || ('ca-unlock' == _id)){
+               for(var i = 0;i<vm.items.length;i++){
+                  if(vm.item == vm.items[i].Id){
+                     vm.accountObj = vm.items[i];
+                  }
+               }
+            }
             if('ca-add' == _id){
                vm.sign = -1;
                if(0 == vm.accountList.length){
@@ -172,13 +188,21 @@
                vm.sign = 1;
                vm.txt = '锁定';
                if(vm.IsSelected(title,info)){
-                  $('#ca-key').modal('show');
+                  if(2!=vm.accountObj.Status){
+                     $('#ca-key').modal('show');
+                  }else{
+                     Custom.isSelected({title: title,txt: '已锁定',index: -1});
+                  }
                }
             }else if('ca-unlock' == _id){
                vm.sign = 2;
                vm.txt = '解锁';
                if(vm.IsSelected(title,info)){
-                  $('#ca-key').modal('show');
+                  if(1!=vm.accountObj.Status){
+                     $('#ca-key').modal('show');
+                  }else{
+                     Custom.isSelected({title: title,txt: '状态正常',index: -1});
+                  }
                }
             }else if('ca-setDefault' == _id){
                vm.sign = 3;
@@ -191,11 +215,6 @@
 
          Custom.selectItem('#ca-table',vm.item,function(res){
             vm.item = res;
-            for(var i = 0;i<vm.items.length;i++){
-               if(res == vm.items[i].Id){
-                  vm.accountNumber = vm.items[i].AccountNumber;
-               }
-            }
          });
 
          vm.getCapAccountList();
@@ -207,14 +226,19 @@
 
             Custom.ajaxFn('/CapitalAccount/Create',{
                data: vm.aktObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '添加成功！';
                   if(res.IsSuccess){
                      $('#ca-add').modal('hide');
                      vm.getCapAccountList();
+                  }else{
+                     msg = '添加失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -230,15 +254,20 @@
             }
 
             Custom.ajaxFn(url,{
-               data: {accountId: vm.accountNumber},
+               data: {accountId: vm.accountObj.Id},
+               vm: vm,
                callback: function(res){
+                  var msg = '锁定成功！';
                   if(res.IsSuccess){
                      $('#ca-key').modal('hide');
                      vm.getCapAccountList();
+                  }else{
+                     msg = '锁定失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -248,15 +277,21 @@
 
             Custom.ajaxFn('/CapitalAccount/GetList',{
                data: vm.search,
+               vm: vm,
                callback: function(res){
+                  var data = res.Data;
                   if(res.IsSuccess){
-                     vm.items = res.Data.Items;
+                     vm.items = data.Items;
+
+                     vm.search.pageIndex= data.CurrentPage;
+                     vm.total = data.TotalPage;
+                     vm.totalItems = data.TotalItems;
                   }else{
                      vm.items = [];
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -264,12 +299,13 @@
          getCurrencyTypeList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/Currency/List',{
+            Custom.ajaxFn('/Currency/LegalList',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.currencyList = res.Data;
                      if(0<res.Data.length){
-                        vm.aktObj.currencyId = res.Data[0].Code;
+                        vm.aktObj.currencyId = res.Data[0];
                      }
                   }
                },
@@ -283,6 +319,7 @@
             var vm = this;
 
             Custom.ajaxFn('/CapitalAccount/GetPayTypeList',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.accountList = res.Data;
@@ -296,12 +333,20 @@
                }
             });
          },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex=index||1;
+            vm.getCapAccountList();
+         },
          // 请选择一个管理员
          IsSelected: function(title,txt){
             var vm = this;
             
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

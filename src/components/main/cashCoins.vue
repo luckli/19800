@@ -10,16 +10,16 @@
                      <div class="form-group">
                         <label for="">币种</label>
                         <select v-model="search.currencyId" class="form-control input-sm" @change="getCoinList()">
-                           <option v-for="type in CTypeList" :value="type.Code">{{type.Code}}</option>
+                           <option v-for="type in CTypeList" :value="type">{{type}}</option>
                         </select>
                      </div>
                      <div class="form-group">
                         <input type="text" class="form-control input-sm" v-model="search.queryText" @input="getCoinList()" placeholder="输入email或userId进行搜索..." />
                      </div>
                      <div class="input-daterange input-group group-date" id="datepicker">
-                        <input type="text" class="input-sm form-control date-range" v-model="search.beginDate" @change="getCoinList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="开始时间" readonly />
                         <span class="input-group-addon">to</span>
-                        <input type="text" class="input-sm form-control date-range" v-model="search.endDate" @change="getCoinList()" readonly />
+                        <input type="text" class="input-sm form-control date-range" placeholder="结束时间" readonly />
                      </div>
                      <div class="form-group radio-status">
                         <label v-for="state in statusList"><input type="radio" name="status" :value="state.id" v-model="search.status" @change="getCoinList()" /><span>{{state.val}}</span></label>
@@ -66,6 +66,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -76,12 +80,15 @@
    import '../../assets/lib/datepicker'
    import '../../assets/lib/bootstrap-datepicker'
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'coinCash',
       data(){
          return {
             items: [],
             CTypeList: [],
+            total: 0,
+            totalItems: 0,
             statusList: [{id: 0,val:'全部'},{id: 1,val:'初始状态'},{id: 2,val:'验证失败'},{id: 3,val:'等待审核'},{id: 4,val:'处理中'},{id: 5,val:'完成'},{id: 6,val:'处理失败'},{id: 7,val:'取消'}],
             search: {currencyId: '',status: 0,queryText: '',beginDate: '',endDate: '',pageIndex: 1,pageSize: 10}
          }
@@ -104,40 +111,56 @@
                }
                count ++;
             });
-            vm.getCoinList();
+            //vm.getCoinList();
          });
+      },
+      watch: {
+         'search.beginDate'(cur,old){
+            this.getCoinList();
+         },
+         'search.endDate'(cur,old){
+            this.getCoinList();
+         }
       },
       methods:{
          // 虚拟币提现列表
          getCoinList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/CoinWithdraw/GetList',{
-               data: vm.search,
-               callback: function(res){
-                  if(res.IsSuccess){
-                     var list = res.Data.Items;
-                     for(var i = 0;i<list.length;i++){
-                        list[i].UpdatedAt = Custom.dateTimeFormatter(list[i].UpdatedAt);
-                        list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+            if((vm.search.beginDate && ''!=vm.search.beginDate) &&(vm.search.endDate && ''!=vm.search.endDate)){
+               Custom.ajaxFn('/CoinWithdraw/GetList',{
+                  data: vm.search,
+                  vm: vm,
+                  callback: function(res){
+                     if(res.IsSuccess){
+                        var list = res.Data.Items;
+                        for(var i = 0;i<list.length;i++){
+                           list[i].UpdatedAt = Custom.dateTimeFormatter(list[i].UpdatedAt);
+                           list[i].CreatedAt = Custom.dateTimeFormatter(list[i].CreatedAt);
+                        }
+                        vm.items = list;
+
+                        vm.total = res.Data.TotalPage;
+                        vm.search.pageIndex = res.Data.CurrentPage;
+                        vm.totalItems = res.Data.TotalItems;
                      }
-                     vm.items = list;
+                  },
+                  errorCallback: function(res){
+                     Custom.isSelected({title: '提示',txt: '获取失败，'+res.statusText,index: -1});
                   }
-               },
-               errorCallback: function(res){
-                  console.log(res);
-               }
-            });
+               });
+            }
          },
          // 获取币种列表
          getCurrencyTypeList: function(){
             var vm = this;
 
             Custom.ajaxFn('/Currency/VirtualList',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.CTypeList = res.Data;
-                     vm.search.currencyId = res.Data[0].Code;
+                     vm.search.currencyId = res.Data[0];
 
                      vm.getCoinList();
                   }
@@ -146,7 +169,15 @@
                   console.log(res);
                }
             });
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getCoinList();
          }
+      },
+      components:{
+         Page
       },
       replace:true
    }

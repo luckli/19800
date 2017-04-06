@@ -76,7 +76,7 @@
       data(){
          return {
             roles: [],
-            index: -1,
+            item: -1,
             roleObj: {Name: '',IsUsable: false},
             sign: false
          }
@@ -86,8 +86,8 @@
 
          vm.getRoleList();
 
-         Custom.selectItem('#role-table',vm.index,function(res){
-            vm.index = res;
+         Custom.selectItem('#role-table',vm.item,function(res){
+            vm.item = res;
          });
          // 关闭重置模态框
          $("#role-add").on("hidden.bs.modal", function() {
@@ -108,9 +108,9 @@
                if(vm.isSelected('提示','请选择角色')){
                   vm.sign = true;
                   for(var i = 0;i<vm.roles.length;i++){
-                     if(vm.index == vm.roles[i].Id){
+                     if(vm.item == vm.roles[i].Id){
                         for(var k in vm.roles[i]){
-                           vm.roleObj[k] = JSON.parse(vm.roles[i][k]);
+                           vm.roleObj[k] = vm.roles[i][k];
                         }
                      }
                   }
@@ -118,7 +118,7 @@
                }
             }else if('role-setRoleAuth' == _id){
                if(vm.isSelected('提示','请选择角色')){
-                  vm.$router.push({name: 'modRoleAuth',params: {Id: vm.index}});
+                  vm.$router.push({name: 'modRoleAuth',params: {Id: vm.item}});
                }
             }
          });
@@ -130,13 +130,18 @@
 
             Custom.ajaxFn('/Role/GetPageList',{
                data: {page: 1,pageSize: 100},
+               vm: vm,
                callback: function(res){
+                  var msg = '获取成功！';
                   if(res.IsSuccess){
                      vm.roles = res.Data.Items;
+                  }else{
+                     msg ='获取失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -149,14 +154,19 @@
             }
             Custom.ajaxFn('/Role/Add',{
                data: vm.roleObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '新增成功！';
                   if(res.IsSuccess){
                      vm.getRoleList();
                      $('#role-add').modal('hide');
+                  }else{
+                     msg = '新增失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -166,20 +176,26 @@
 
             Custom.ajaxFn('/Role/Update',{
                data: vm.roleObj,
+               vm: vm,
                callback: function(res){
+                  var msg = '修改成功！';
                   if(res.IsSuccess){
-                     for(var i = 0;i<vm.roles.length;i++){
+                     /*for(var i = 0;i<vm.roles.length;i++){
                         if(vm.index == vm.roles[i].Id){
                            for(var k in vm.roles[i]){
                               vm.roles[i][k] = vm.roleObj[k];
                            }
                         }
-                     }
+                     }*/
+                     vm.getRoleList();
                      $('#role-add').modal('hide');
+                  }else{
+                     msg = '修改失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -193,7 +209,7 @@
          // 请选择一个模块
          isSelected: function(title,txt){
             var vm = this;
-            return Custom.isSelected({title: title,txt: txt,index: vm.index});
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
       },
       replace: true

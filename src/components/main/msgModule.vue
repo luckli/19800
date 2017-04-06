@@ -213,16 +213,25 @@
 
             Custom.ajaxFn(url,{
                data: vm.obj,
+               vm: vm,
                callback: function(res){
+                  var msg = '新增成功！';
+                  if(2==vm.sign){
+                     msg = '修改成功！';
+                  }
                   if(res.IsSuccess){
                      vm.getPageList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: res,index: -1});
+                     msg = '新增失败，'+res.ErrorMsg;
+                     if(2==vm.sign){
+                        msg = '修改失败，'+res.ErrorMsg;
+                     }
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#trg-operate').modal('hide');
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -232,16 +241,19 @@
 
             Custom.ajaxFn('/NoticeTpl/Delete',{
                data: {Id: vm.item},
+               vm: vm,
                callback: function(res){
+                  var msg = '删除成功！';
                   if(res.IsSuccess){
                      vm.getPageList();
                   }else{
-                     Custom.isSelected({title: '提示',txt: res,index: -1});
+                     msg = '删除失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                   $('#trg-del').modal('hide');
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -251,6 +263,7 @@
 
             Custom.ajaxFn('/NoticeTpl/GetPageList',{
                data: vm.search,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.items = res.Data.Items;
@@ -260,7 +273,7 @@
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },

@@ -6,12 +6,16 @@
             <div class="panel panel-inverse">
                <div class="panel-heading"><h4 class="panel-title">账户余额列表</h4></div>
                <div class="panel-body">
+                  <div class="manage-btns">
+                     <button class="btn btn-inverse" data-id="account-lock">锁定</button>
+                     <button class="btn btn-inverse" data-id="account-unlock">解锁</button>
+                  </div>
                   <div class="dataTable-filter ">
                      <form class="form-inline text-right">
                         <div class="form-group">
                            <label for="">币种</label>
                            <select v-model="search.currencyId" class="form-control input-sm" @change="getAccountBalanceList()">
-                              <option v-for="type in CTypeList" :value="type.id">{{type.val}}</option>
+                              <option v-for="type in CTypeList" :value="type">{{type}}</option>
                            </select>
                         </div>
                         <div class="form-group">
@@ -32,7 +36,7 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="item in items">
+                        <tr v-for="item in items" :data-id="item.Id">
                            <td>{{item.Id}}</td>
                            <td>{{item.UserName}}</td>
                            <td>{{item.Balance}}</td>
@@ -45,43 +49,140 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.pageIndex*search.pageSize)-9}}</span> 至 <span>{{search.pageIndex*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.pageIndex" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
       </div>
+      <!-- 锁定/解锁 -->
+      <div class="modal fade" id="mod-operate">
+         <div class="modal-dialog">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title"><span v-show="1==sign">锁定</span><span v-show="2==sign">解锁</span></h4>
+               </div>
+               <div class="modal-body">
+                  <form class="form-horizontal">
+                     
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">用户Id</label>
+                        <div class="col-md-6">
+                           <input type="text" class="form-control" disabled v-model="obj.userId" />
+                        </div>
+                     </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label custom-label">币种Id</label>
+                        <div class="col-md-6">
+                           <select v-model="obj.currencyId" class="form-control input-sm">
+                              <option v-for="type in CTypeList" :value="type">{{type}}</option>
+                           </select>
+                        </div>
+                     </div>
+                  </form>
+               </div>
+               <div class="modal-footer">
+                  <button type="button" class="btn btn-sm btn-white" data-dismiss="modal">关闭</button>
+                  <button type="button" class="btn btn-sm btn-success" @click="toOperate()">确定</button>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- 锁定/解锁 -->
    </div>
 </template>
 <script>
    import Custom from 'custom'
+   import Page from 'page'
    export default{
       name: 'account',
       data(){
          return{
             search: {queryText: '',currencyId: '',pageIndex: 1,pageSize: 10},
-            CTypeList: [],
-            items: []
+            obj: {userId: '',currencyId: ''},
+            CTypeList: ['请选择'],
+            items: [],
+            total: 0,
+            totalItems: 0,
+            item: -1,
+            sign: -1
          }
       },
       mounted(){
          var vm = this;
 
          vm.getCurrencyTypeList();
+         $('.manage-btns').on('click',function(e){
+            e = e || window.event;
+
+            var _id = $(e.target).attr('data-id'),title="提示",info = "请选择一个用户记录";
+            if('account-lock' == _id){
+               vm.sign = 1;
+               if(vm.IsSelected(title,info)){
+                  $('#mod-operate').modal('show');
+               }
+            }else if('account-lock' == _id){
+               vm.sign = 2;
+               if(vm.IsSelected(title,info)){
+                  $('#mod-operate').modal('show');
+               }
+            }
+         });
+         Custom.selectItem('#account-table',vm.item,function(res){
+            vm.item = res;
+            vm.obj.userId = res;
+            console.log(res);
+         });
       },
       methods: {
-         // 获取账号余额列表
-         getAccountBalanceList: function(){
-            var vm = this;
-
-            Custom.ajaxFn('/Account/GetList',{
-               data: vm.search,
+         // 锁定/解锁
+         toOperate: function(){
+            var vm = this,url = '/Account/Lock';
+            if(2==vm.sign){
+               url = '/Account/Unlock';
+            }
+            Custom.ajaxFn(url,{
+               data: vm.obj,
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.items = res.Data.Items;
-                     //items[i].UpdatedAt = Custom.dateTimeFormatter(items[i].UpdatedAt);
+                     $('#mod-operate').modal('hide');
+                     vm.getAccountBalanceList();
+                  }else{
+                     Custom.isSelected({title: '提示',txt: '操作失败,'+res.ErrorMsg,index: -1});
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
+               }
+            });
+         },
+         // 获取账号余额列表
+         getAccountBalanceList: function(){
+            var vm = this,data = JSON.parse(JSON.stringify(vm.search));
+            if('请选择'==data.currencyId){
+               data.currencyId = '';
+            }
+            Custom.ajaxFn('/Account/GetList',{
+               data: data,
+               vm: vm,
+               callback: function(res){
+                  if(res.IsSuccess){
+                     var list = res.Data.Items;
+                     for(var i =0;i<list.length;i++){
+                        list[i].UpdatedAt = Custom.dateTimeFormatter(list[i].UpdatedAt);
+                     }
+                     vm.items = list;
+                     vm.total = res.Data.TotalPage;
+                     vm.search.pageIndex = res.Data.CurrentPage;
+                     vm.totalItems = res.Data.TotalItems;
+                  }
+               },
+               errorCallback: function(res){
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -89,11 +190,15 @@
          getCurrencyTypeList: function(){
             var vm = this;
 
-            Custom.ajaxFn('/Currency/VirtualList',{
+            Custom.ajaxFn('/Currency/List',{
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.CTypeList = res.Data;
-                     vm.search.currencyId = res.Data[0].Code;
+                     for(var i = 0;i<res.Data.length;i++){
+                        vm.CTypeList.push(res.Data[i]);
+                     }
+                     vm.search.currencyId = vm.CTypeList[0];
+                     vm.obj.currencyId = vm.CTypeList[0];
                      vm.getAccountBalanceList();
                   }
                },
@@ -101,7 +206,21 @@
                   console.log(res);
                }
             });
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.pageIndex = index;
+            vm.getPageList();
+         },
+         // 请选择一个管理员
+         IsSelected: function(title,txt){
+            var vm = this;
+            
+            return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

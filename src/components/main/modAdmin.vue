@@ -19,7 +19,7 @@
                   <div class="col-xs-4 col-md-4 dataTable-filter text-right">
                      <label for="input-filter">
                         <span>搜索</span>
-                        <input type="text" class="form-control input-sm" v-model="search" placeholder="输入登陆账号进行搜索..." />
+                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="mngList()" placeholder="输入登陆账号进行搜索..." />
                      </label>
                   </div>
                   <div class="clearfix"></div>
@@ -45,9 +45,10 @@
                         </tr>
                      </tbody>
                   </table>
-                  <!-- <div>
-                     <label>显示第 <span>{{(pageObj.index*10)-9}}</span> 至 <span>{{pageObj.index*10}}</span> 项结果，共 <span>{{pageObj.items}}</span> 项</label>
-                  </div> -->
+                  <div>
+                     <label>显示第 <span>{{(search.page*search.pageSize)-9}}</span> 至 <span>{{search.page*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.page" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -84,7 +85,7 @@
                </div>
                <div class="modal-footer">
                   <a href="javascript:;" class="btn btn-sm btn-white" data-dismiss="modal">关闭</a>
-                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngAdd()" @keyup.enter="mngAdd()">保存</a>
+                  <a href="javascript:;" class="btn btn-sm btn-success" @click="mngAddFn()" @keyup.enter="mngAddFn()">保存</a>
                </div>
             </div>
          </div>
@@ -330,16 +331,16 @@
 <script>
    import '../../assets/lib/jquery.gritter'
    import '../../assets/lib/jquery.qrcode'
-   import Custom from '../../assets/js/custom'
+   import Custom from 'custom'
+   import Page from 'page'
    export default {
       name: 'adminList',
       mounted(){
          var vm = this;
          vm.mngList();
-         vm.item = -1;
 
          /*选定管理员*/
-         $('#manage-table').on('click',function(e){
+         /*$('#manage-table').on('click',function(e){
             e = e || window.event;
             var $tbody = $(e.target).closest('tbody'),
                $tr = $(e.target).closest('tr');
@@ -354,7 +355,7 @@
                   vm.mngReset.user = vm.mngObj.Items[vm.item-1].Account;
                }
             }
-         });
+         });*/
 
          // 显示弹层
          $('.manage-btns').on('click',function(e){
@@ -393,6 +394,11 @@
                }
             }
          });
+
+         Custom.selectItem('#manage-table',vm.item,function(res){
+            vm.item = res;
+            vm.mngReset.user = vm.mngObj.Items[vm.item-1].Account;
+         });
       },
       data(){
          return {
@@ -404,7 +410,9 @@
             authAmount: '',
             gugObj: {optCode: '',TF: '加载中...',isBind: true},
             roleList: [],
-            search: ''
+            total: 0,
+            totalItems: 0,
+            search: {queryText: '',page: 1,pageSize: 10}
          }
       },
       methods:{
@@ -413,36 +421,46 @@
             var vm = this;
 
             Custom.ajaxFn('/Manager/GetPageList',{
-               data: {page: 1,pageSize: 10},
+               data: {page: vm.search.page,pageSize: vm.search.pageSize},
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
-                     vm.mngObj = res.Data;
-                     var list = vm.mngObj.Items;
+                     var list = res.Data.Items;
                      for(var i = 0;i<list.length;i++){
                         list[i].CreateTime = Custom.dateTimeFormatter(list[i].CreateTime);
                         list[i].LockedTime = Custom.dateTimeFormatter(list[i].LockedTime);
                      }
+                     vm.mngObj.Items = list;
+
+                     vm.total = res.Data.TotalPage;
+                     vm.search.page = res.Data.CurrentPage;
+                     vm.totalItems = res.Data.TotalItems;
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          },
          // 添加管理员
-         mngAdd: function(){
+         mngAddFn: function(){
             var vm = this;
             Custom.ajaxFn('/Manager/Add',{
                data: {account: vm.mngAdd.account,nickName: vm.mngAdd.nickName,password: vm.mngAdd.password},
+               vm: vm,                     
                callback: function(res){
+                  var msg = '添加成功！';
                   if(res.IsSuccess){
                      $('#mng-add').modal('hide');
                      vm.mngAdd = {account: '',nickName: '',password: ''};
                      vm.mngList();
+                  }else{
+                     msg = '添加失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -453,14 +471,19 @@
             vm.isLock = true;
             Custom.ajaxFn('/Manager/UpdateLockStatus',{
                data: {id: vm.item,isLock: vm.isLock},
+               vm: vm,
                callback: function(res){
+                  var msg = '锁定成功！';
                   if(res.IsSuccess){
                      vm.mngObj.Items[vm.item-1].IsLocked = vm.isLock;
                      $('#mng-lock').modal('hide');
+                  }else{
+                     msg = '锁定失败！'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -471,14 +494,19 @@
             vm.isLock = false;
             Custom.ajaxFn('/Manager/UpdateLockStatus',{
                data: {id: vm.item,isLock: vm.isLock},
+               vm: vm,
                callback: function(res){
+                  var msg = '解锁成功！';
                   if(res.IsSuccess){
                      vm.mngObj.Items[vm.item-1].IsLocked = vm.isLock;
                      $('#mng-unlock').modal('hide');
+                  }else{
+                     msg = '解锁失败！'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -494,13 +522,18 @@
 
             Custom.ajaxFn('/Manager/SetRoles',{
                data: {id: vm.item,roles: ids.join(',')},
+               vm: vm,
                callback: function(res){
+                  var msg = '分配成功！';
                   if(res.IsSuccess){
                      $('#mng-setRole').modal('hide');
+                  }else{
+                     msg = '分配失败！'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -510,14 +543,19 @@
 
             Custom.ajaxFn('/Manager/UpdatePassword',{
                data: {id: vm.item,password: vm.mngReset.pwd},
+               vm: vm,
                callback: function(res){
+                  var msg = '修改成功！';
                   if(res.IsSuccess){
                      vm.mngReset = {user: '',pwd: '',repwd: ''};
                      $('#mng-resetPwd').modal('hide');
+                  }else{
+                     msg = '修改失败！'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -530,15 +568,20 @@
             }
             Custom.ajaxFn('/Manager/AddDepositAmount',{
                data: {id: vm.item,amount: vm.authAmount},
+               vm: vm,
                callback: function(res){
+                  var msg = '授权成功！';
                   if(res.IsSuccess){
                      vm.authAmount = '';
                      vm.mngObj.Items[vm.item-1].DepositAmount = res.Data;
                      $('#mng-depositCodeAuth').modal('hide');
+                  }else{
+                     msg = '授权失败！'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -548,14 +591,19 @@
             
             Custom.ajaxFn('/Manager/BindOtp',{
                data: {id: vm.item,code: vm.gugObj.optCode},
+               vm: vm,
                callback: function(res){
+                  var msg = '绑定成功！';
                   if(res.IsSuccess){
                      vm.gugObj = {optCode: '',TF: '加载中...',isBind: false};
                      $('#mng-viewTF').modal('hide');
+                  }else{
+                     msg = '绑定失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
@@ -565,33 +613,39 @@
             
             Custom.ajaxFn('/Manager/UnBindOtp',{
                data: {id: vm.item},
+               vm: vm,
                callback: function(res){
+                  var msg = '解除成功！';
                   if(res.IsSuccess){
                      $('#mng-unbindOtp').modal('hide');
+                  }else{
+                     msg = '解除失败，'+res.ErrorMsg;
                   }
+                  Custom.isSelected({title: '提示',txt: msg,index: -1});
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '操作失败,'+res.statusText,index: -1});
                }
             });
          },
          // 获取谷歌密钥
          getGoogleKey: function(){
             var vm = this;
-
             vm.gugObj.TF = '加载中...';
             Custom.ajaxFn('/Manager/GetOtpSecretKey',{
                data: {id: vm.item},
+               vm: vm,
                callback: function(res){
                   if(res.IsSuccess){
                      vm.gugObj.TF = res.Data.SecretKey;
                      $('#qrcode>canvas').remove();
-                     $('#qrcode').qrcode({width:100,height:100,correctLevel:0,text: res.Data.SecretKey});
+                     $('#qrcode').qrcode({width:100,height:100,correctLevel:0,text: 'otpauth://totp/'+vm.mngReset.user+'?secret='+res.Data.SecretKey});
                      vm.gugObj.isBind = res.Data.IsBind;
+                  }else{
+                     vm.gugObj.TF = '获取失败！';
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
                   vm.gugObj.TF = '加载出错，请稍后重试！';
                }
             });
@@ -605,6 +659,11 @@
                {id: 2,roleName: 'FinancialManager'},
                {id: 3,roleName: 'CustomerService'},
                {id: 4,roleName: 'Editor'}];
+         },
+         pageFn: function(index){
+            var vm = this;
+            vm.search.page = index;
+            vm.mngList();
          },
          // 请选择一个管理员
          IsSelected: function(title,txt){
@@ -624,6 +683,9 @@
             }*/
             return Custom.isSelected({title: title,txt: txt,index: vm.item});
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

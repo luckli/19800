@@ -51,6 +51,10 @@
                         </tr>
                      </tbody>
                   </table>
+                  <div>
+                     <label>显示第 <span>{{(search.page*search.pageSize)-9}}</span> 至 <span>{{search.page*search.pageSize}}</span> 项结果，共 <span>{{totalItems}}</span> 项</label>
+                     <Page class="pull-right" :index="search.page" :size="search.pageSize" :total="total" :callbacks="pageFn"></Page>
+                  </div>
                </div>
             </div>
          </div>
@@ -59,11 +63,14 @@
 </template>
 <script>
    import Custom from 'custom'
+   import Page from 'page'
    export default {
       name: 'shortMsg',
       data(){
          return{
             items: [],
+            total: 0,
+            totalItems: 0,
             countryList: [{id: -1,val: '请选择'},{id: 0,val: '中国'}],
             types: [{id: -1,val: '请选择'},{id: 0,val: 'CN'},{id: 1,val: 'EN'}],
             search: {country: 0,langType: 0,key: '',page: 1,pageSize: 10}
@@ -90,10 +97,13 @@
                   }
                },
                errorCallback: function(res){
-                  console.log(res);
+                  Custom.isSelected({title: '提示',txt: '请求失败,'+res.statusText,index: -1});
                }
             });
          }
+      },
+      components:{
+         Page
       },
       replace: true
    }

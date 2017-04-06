@@ -5,7 +5,7 @@ import Apps from './App'
 import configRouter from './router'
 
 Vue.use(VueRouter);
-Vue.use(VueResource);
+//Vue.use(VueResource);
 
 var router = new VueRouter({
    mode: 'hash',
