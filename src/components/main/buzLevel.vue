@@ -24,7 +24,7 @@
                      <tbody>
                         <tr v-for="item in items" :data-id="item.Id">
                            <td>{{item.Id}}</td>
-                           <td>{{item.VerifyLevel}}</td>
+                           <td>VIP{{item.VerifyLevel}}</td>
                            <td>{{item.DayAmount}}</td>
                            <td>{{item.MonthAount}}</td>
                         </tr>

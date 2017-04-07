@@ -108,7 +108,7 @@
    /*import '../../assets/lib/kindeditor/kindeditor-all'
    import '../../assets/lib/kindeditor/themes/default/default'*/
    import '../../assets/lib/nicEdit/nicEdit'
-   import Editor from 'kindEditor'
+   //import Editor from 'kindEditor'
    /*import '../../assets/lib/utf8-php/ueditor.config'
    import '../../assets/lib/utf8-php/ueditor.parse.min'
    import '../../assets/lib/utf8-php/ueditor.all'
@@ -218,9 +218,9 @@
             });
          }
       },
-      components:{
+      /*components:{
          Editor
-      },
+      },*/
       replace: true
    }
 </script>

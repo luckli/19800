@@ -19,7 +19,7 @@
                            </select>
                         </div>
                         <div class="form-group">
-                           <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getAccountBalanceList()" placeholder="输入用户Id进行搜索..." />
+                           <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="getAccountBalanceList()" placeholder="输入用户名进行搜索..." />
                         </div>
                      </form>
                   </div>

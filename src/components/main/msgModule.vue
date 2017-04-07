@@ -95,7 +95,7 @@
                         <label class="col-md-4 control-label custom-label">是否可用</label>
                         <div class="col-md-6">
                            <input type="checkbox" v-model="obj.IsUsable" />
-                        </div
+                        </div>
                      </div>
                   </form>
                </div>

@@ -38,8 +38,8 @@
                         </tr>
                      </thead>
                      <tbody>
-                        <tr v-for="list in items.BidList">
-                           <td>买{{}}</td>
+                        <tr v-for="(list,index) in items.BidList">
+                           <td>买{{index+1}}</td>
                            <td>{{list.Price}}</td>
                            <td>{{list.Amount}}</td>
                            <td>{{list.Total}}</td>
@@ -90,7 +90,7 @@
       data(){
          return {
             items: {AskList:[],BidList: []},
-            marketObj: {marketId: '',limit: 10,precision: ''},
+            marketObj: {marketId: '',limit: 10,precision: 2},
             markets: [{Id: 0,val: '请选择市场'}],
             depths: [{Id: 0,val: '请选择深度'},{Id: 2,val: 2},{Id: 4,val: 4},{Id: 6,val: 6},{Id: 8,val: 8}]
          }
@@ -132,7 +132,11 @@
                      for(var i = 0;i<list.length;i++){
                         vm.markets.push({Id: list[i],val: list[i]});
                      }
-                     //vm.marketObj.marketId = vm.markets[0];
+                     if(0<vm.markets.length){
+                        vm.marketObj.marketId = vm.markets[1].Id;
+                     }else{
+                        vm.marketObj.marketId = vm.markets[0].Id;
+                     }
                      vm.getMarketDepth();
                   }
                },

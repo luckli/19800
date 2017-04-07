@@ -57,7 +57,7 @@
                            <td>{{item.CreatedAt}}</td>
                         </tr>
                         <tr v-if="0 == items.length">
-                           <td colspan="11" style="text-align: center;">无数据</td>
+                           <td colspan="6" style="text-align: center;">无数据</td>
                         </tr>
                      </tbody>
                   </table>

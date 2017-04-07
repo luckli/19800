@@ -122,9 +122,9 @@
                vm:vm,
                callback: function(res){
                   if(res.IsSuccess){
-                     var list = res.Data.Items;
+                     var list = res.Data.Items,date;
                      for(var i = 0;i<list.length;i++){
-                        list[i].Period = Custom.dateTimeFormatter(list[i].Period);
+                        list[i].Period = list[i].Period.replace(/\//g, '-');
                      }
                      vm.items = list;
 
