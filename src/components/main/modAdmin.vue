@@ -19,7 +19,7 @@
                   <div class="col-xs-4 col-md-4 dataTable-filter text-right">
                      <label for="input-filter">
                         <span>搜索</span>
-                        <input type="text" class="form-control input-sm" v-model="search.queryText" @keyup.enter="mngList()" placeholder="输入登陆账号进行搜索..." />
+                        <input type="text" class="form-control input-sm" v-model="search.realName" @keyup.enter="mngList()" placeholder="输入登陆账号进行搜索..." />
                      </label>
                   </div>
                   <div class="clearfix"></div>
@@ -412,7 +412,7 @@
             roleList: [],
             total: 0,
             totalItems: 0,
-            search: {queryText: '',page: 1,pageSize: 10}
+            search: {realName: '',page: 1,pageSize: 10}
          }
       },
       methods:{
@@ -421,7 +421,7 @@
             var vm = this;
 
             Custom.ajaxFn('/Manager/GetPageList',{
-               data: {page: vm.search.page,pageSize: vm.search.pageSize},
+               data: vm.search,
                vm: vm,
                callback: function(res){
                   if(res.IsSuccess){

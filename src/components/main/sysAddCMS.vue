@@ -89,7 +89,7 @@
                         <div class="col-md-8">
                            <button type="button" class="btn btn-inverse" v-if="1==sign" @click="addNews()">添加</button>
                            <button type="button" class="btn btn-inverse" v-if="2==sign" @click="addNews()">修改</button>
-                           <a href="/#/main/sysCMS" class="btn btn-inverse">取消</a>
+                           <a href="/#/main/sysCMS" class="btn btn-inverse">返回</a>
                         </div>
                      </div>
                   </form>
