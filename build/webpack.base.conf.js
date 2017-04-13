@@ -29,6 +29,7 @@ module.exports = {
          'components': path.resolve(__dirname, '../src/components'),
          'custom': path.resolve('./src/assets/js/custom.js'),
          'page': path.resolve('./src/components/include/Page'),
+         'vuex': path.resolve('./src/assets/lib/vuex.min.js'),
          'jquery': path.resolve('./src/assets/lib/jquery-1.9.1.min.js'),
          'jForm': path.resolve('./src/assets/lib/jquery.form.js'),
          'kindEditor': path.resolve('./src/components/include/KindEditor')

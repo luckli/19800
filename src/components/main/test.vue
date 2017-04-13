@@ -1,19 +1,32 @@
 <template>
-   <h3 @click="cFn()">{{msg}}</h3>
+   <div style="margin-left: 300px;">
+      <button @click="toMsg()">父件到组件</button>
+      <Txt :msg="msg" :that="that"></Txt>
+      <Txt2 :that="that"></Txt2>
+   </div>
 </template>
 <script>
+   import vuex from 'vuex'
+   import Custom from 'custom'
+   import Txt from '../include/test2'
+   import Txt2 from '../include/test3'
    export default{
       name: 'test',
       data(){
          return {
-            msg: 'sky'
+            msg: 'vuex',
+            that: this
          }
       },
-      methods: {
-         cFn: function(){
+      methods:{
+         toMsg: function(){
             var vm = this;
-            vm.$emit('css-fn',vm.msg);
+            vm.that.$emit('cssFn','父件');
          }
+      },
+      components: {
+         Txt,
+         Txt2
       }
    }
 </script>

@@ -42,7 +42,8 @@ function configRouter(){
          { path: 'sysAddCMS', component: require('./components/main/sysAddCMS') },
          { path: 'sysCapitalAccount', component: require('./components/main/sysCapitalAccount') },
          { path: 'sysLoginLog', component: require('./components/main/sysLoginLog') },
-         { path: 'sysTotalLedger', component: require('./components/main/sysTotalLedger') }
+         { path: 'sysTotalLedger', component: require('./components/main/sysTotalLedger') },
+         { path: 'test', component: require('./components/main/test') }
       ]},
       {path: '*', redirect: 'login'}
    ];
